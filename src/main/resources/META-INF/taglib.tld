@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<taglib xmlns="http://java.sun.com/xml/ns/j2ee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-jsptaglibrary_2_0.xsd"
+	version="2.0">
+	<tlib-version>2.1</tlib-version>
+	<short-name>simp</short-name>
+	<uri>http://icts.uiowa.edu/LD4L</uri>
+
+	<tag>
+		<name>getSequenceNumber</name>
+		<tag-class>edu.uiowa.slis.LD4L.Sequence</tag-class>
+		<body-content>empty</body-content>
+
+		<attribute>
+			<name>var</name>
+			<required>true</required>
+			<rtexprvalue>false</rtexprvalue>
+		</attribute>
+	</tag>
+
+	<tag>
+		<name>dbtest</name>
+		<tag-class>edu.uiowa.slis.LD4L.DBTest</tag-class>
+		<body-content>empty</body-content>
+	</tag>
+
+	<tag>
+		<name>foreachTable1</name>
+		<tag-class>edu.uiowa.slis.LD4L.table1.Table1Iterator</tag-class>
+		<body-content>JSP</body-content>
+
+		<attribute>
+			<name>var</name>
+			<required>true</required>
+			<rtexprvalue>false</rtexprvalue>
+		</attribute>
+
+		<attribute>
+			<name>sortCriteria</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+
+		<attribute>
+			<name>limitCriteria</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+
+		<attribute>
+			<name>table1Id</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+	<tag>
+		<name>table1</name>
+		<tag-class>edu.uiowa.slis.LD4L.table1.Table1</tag-class>
+		<body-content>JSP</body-content>
+
+		<attribute>
+			<name>table1Id</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+	<tag>
+		<name>deleteTable1</name>
+		<tag-class>edu.uiowa.slis.LD4L.table1.Table1Deleter</tag-class>
+		<body-content>JSP</body-content>
+
+		<attribute>
+			<name>table1Id</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+	<tag>
+		<name>table1Table1Id</name>
+		<tag-class>edu.uiowa.slis.LD4L.table1.Table1Table1Id</tag-class>
+		<body-content>empty</body-content>
+
+		<attribute>
+			<name>table1Id</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+	<tag>
+		<name>table1Table2Id</name>
+		<tag-class>edu.uiowa.slis.LD4L.table1.Table1Table2Id</tag-class>
+		<body-content>empty</body-content>
+
+		<attribute>
+			<name>table2Id</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+	<tag>
+		<name>foreachTable2</name>
+		<tag-class>edu.uiowa.slis.LD4L.table2.Table2Iterator</tag-class>
+		<body-content>JSP</body-content>
+
+		<attribute>
+			<name>var</name>
+			<required>true</required>
+			<rtexprvalue>false</rtexprvalue>
+		</attribute>
+
+		<attribute>
+			<name>sortCriteria</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+
+		<attribute>
+			<name>limitCriteria</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+
+		<attribute>
+			<name>table2Id</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+	<tag>
+		<name>table2</name>
+		<tag-class>edu.uiowa.slis.LD4L.table2.Table2</tag-class>
+		<body-content>JSP</body-content>
+
+		<attribute>
+			<name>table2Id</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+	<tag>
+		<name>deleteTable2</name>
+		<tag-class>edu.uiowa.slis.LD4L.table2.Table2Deleter</tag-class>
+		<body-content>JSP</body-content>
+
+		<attribute>
+			<name>table2Id</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+	<tag>
+		<name>table2Table2Id</name>
+		<tag-class>edu.uiowa.slis.LD4L.table2.Table2Table2Id</tag-class>
+		<body-content>empty</body-content>
+
+		<attribute>
+			<name>table2Id</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+	<function>
+		<name>table1Exists</name>
+		<function-class>edu.uiowa.slis.LD4L.table1.Table1Iterator</function-class>
+		<function-signature>java.lang.String table1Exists(java.lang.String)</function-signature>
+	</function>
+
+	<function>
+		<name>table1CountByTable2</name>
+		<function-class>edu.uiowa.slis.LD4L.table1.Table1Iterator</function-class>
+		<function-signature>java.lang.String table1CountByTable2(java.lang.String)</function-signature>
+	</function>
+
+	<function>
+		<name>table2HasTable1</name>
+		<function-class>edu.uiowa.slis.LD4L.table1.Table1Iterator</function-class>
+		<function-signature>java.lang.Boolean table2HasTable1(java.lang.String)</function-signature>
+	</function>
+
+	<function>
+		<name>table1Table1IdValue</name>
+		<function-class>edu.uiowa.slis.LD4L.table1.Table1</function-class>
+		<function-signature>java.lang.Integer table1IdValue()</function-signature>
+	</function>
+
+	<function>
+		<name>table1Table2IdValue</name>
+		<function-class>edu.uiowa.slis.LD4L.table1.Table1</function-class>
+		<function-signature>java.lang.Integer table2IdValue()</function-signature>
+	</function>
+
+	<function>
+		<name>table2Count</name>
+		<function-class>edu.uiowa.slis.LD4L.table2.Table2Iterator</function-class>
+		<function-signature>java.lang.String table2Count()</function-signature>
+	</function>
+
+	<function>
+		<name>table2Exists</name>
+		<function-class>edu.uiowa.slis.LD4L.table2.Table2Iterator</function-class>
+		<function-signature>java.lang.String table2Exists(java.lang.String)</function-signature>
+	</function>
+
+	<function>
+		<name>table2Table2IdValue</name>
+		<function-class>edu.uiowa.slis.LD4L.table2.Table2</function-class>
+		<function-signature>java.lang.Integer table2IdValue()</function-signature>
+	</function>
+</taglib>
