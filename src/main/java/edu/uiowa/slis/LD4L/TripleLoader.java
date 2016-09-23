@@ -39,16 +39,16 @@ public class TripleLoader implements Runnable {
     static PipedRDFStream<Triple> inputStream = null;
     
     static Reasoner reasoner = null;
-    static PrintStream printstream = null;
+//    static PrintStream printstream = null;
     
     public static void main(String[] args) throws Exception {
-	PropertyConfigurator.configure("log4j.info");
+	PropertyConfigurator.configure("log4j.error");
 
 	Model schema = FileManager.get().loadModel(local ? "file:/Users/eichmann/downloads/ontology.rdf" : "file:/Volumes/Pegasus2/LD4L/ontology.rdf");
 	reasoner = ReasonerRegistry.getOWLMicroReasoner();
 	reasoner = reasoner.bindSchema(schema);
 	
-	printstream = new PrintStream((local ? "/Volumes/Spare2/" : "/Volumes/Pegasus2/LD4L/inference_dumps/") + args[0] + ".nt");
+//	printstream = new PrintStream((local ? "/Volumes/Spare2/" : "/Volumes/Pegasus2/LD4L/inference_dumps/") + args[0] + ".nt");
 
 	switch (args[0]) {
 	case "cornell":
@@ -75,7 +75,7 @@ public class TripleLoader implements Runnable {
 	default:
 	    break;
 	}
-	printstream.close();
+//	printstream.close();
     }
 
     static void processTarFile(String path) throws Exception {
@@ -132,7 +132,7 @@ public class TripleLoader implements Runnable {
 	logger.info("generating inference model...");
 	InfModel infmodel = ModelFactory.createInfModel(reasoner, model);
 	logger.info("inferred model size: " + infmodel.listStatements().toList().size());
-	RDFDataMgr.write(printstream, infmodel, Lang.NTRIPLES);
+	RDFDataMgr.write(System.out, infmodel, Lang.NTRIPLES);
 //	Model diffmodel = infmodel.difference(model);
 //	logger.info("iterating over inferred triples...");
 //	int infCount = 0;
