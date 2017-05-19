@@ -146,12 +146,16 @@ public class Indexer {
 	ResultSet rs = getResultSet(query);
 	while (rs.hasNext()) {
 	    QuerySolution sol = rs.nextSolution();
-	    String nameURI = sol.get("?uri").toString();
+	    String URI = sol.get("?uri").toString();
 	    String name = sol.get("?name").toString();
-	    logger.debug("uri: " + nameURI + "\tname: " + name);
+	    
+	    if (!URI.startsWith("http:"))
+		continue;
+	    
+	    logger.debug("uri: " + URI + "\tname: " + name);
 	    
 	    Document theDocument = new Document();
-	    theDocument.add(new Field("uri", nameURI, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("name", name, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("content", name, Field.Store.NO, Field.Index.ANALYZED));
 	    theWriter.addDocument(theDocument);
@@ -174,7 +178,11 @@ public class Indexer {
 	    QuerySolution sol = rs.nextSolution();
 	    String URI = sol.get("?uri").toString();
 	    String subject = sol.get("?subject").toString();
-	    logger.info("uri: " + URI + "\tsubject: " + subject);
+	    
+	    if (!URI.startsWith("http:"))
+		continue;
+	    
+	    logger.debug("uri: " + URI + "\tsubject: " + subject);
 	    
 	    Document theDocument = new Document();
 	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
