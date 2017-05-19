@@ -25,12 +25,12 @@ import org.apache.lucene.store.LockObtainFailedException;
 public class Indexer {
     protected static Logger logger = Logger.getLogger(Indexer.class);
     
-    static boolean useSPARQL = true;
+    static boolean useSPARQL = false;
     static Dataset dataset = null;
     static String tripleStore = null;
     static String endpoint = null;
     
-    static String dataPath = "/Volumes/LD4L/";
+    static String dataPath = "/Volumes/Pegasus3/LD4L/";
     static String lucenePath = null;
     static String prefix = 
 	    "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> "
@@ -44,7 +44,12 @@ public class Indexer {
     public static void main(String[] args) throws CorruptIndexException, LockObtainFailedException, IOException {
 	PropertyConfigurator.configure("log4j.info");
 
-	tripleStore = dataPath + args[0];
+	if (args.length == 1 && args[0].equals("loc_names"))
+	    tripleStore = dataPath + "loc/names";
+	else if (args.length == 1 && args[0].equals("loc_subjects"))
+	    tripleStore = dataPath + "loc/subjects";
+	else
+	    tripleStore = dataPath + args[0];
 	endpoint = "http://guardian.slis.uiowa.edu:3030/" + args[0] + "/sparql";
 	
 	if (args.length > 1 && args[1].equals("work"))
@@ -67,6 +72,8 @@ public class Indexer {
 	    indexPersons(theWriter);
 	if (args.length > 0 && args[0].equals("loc_names"))
 	    indexLoCNames(theWriter);
+	if (args.length > 0 && args[0].equals("loc_subjects"))
+	    indexLoCSubjects(theWriter);
 
 	logger.info("optimizing index...");
 	theWriter.optimize();
@@ -134,19 +141,45 @@ public class Indexer {
 	String query =
 		"SELECT ?uri ?name WHERE { "
 		+ "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
-    		+ "} limit 100000";
-	logger.info("query: " + query);
+    		+ "} ";
+	logger.debug("query: " + query);
 	ResultSet rs = getResultSet(query);
 	while (rs.hasNext()) {
 	    QuerySolution sol = rs.nextSolution();
 	    String nameURI = sol.get("?uri").toString();
 	    String name = sol.get("?name").toString();
-	    logger.info("uri: " + nameURI + "\tname: " + name);
+	    logger.debug("uri: " + nameURI + "\tname: " + name);
 	    
 	    Document theDocument = new Document();
 	    theDocument.add(new Field("uri", nameURI, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("name", name, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("content", name, Field.Store.NO, Field.Index.ANALYZED));
+	    theWriter.addDocument(theDocument);
+	    count++;
+	    if (count % 100000 == 0)
+		logger.info("count: " + count);
+	}
+	logger.info("total names: " + count);
+    }
+
+    static void indexLoCSubjects(IndexWriter theWriter) throws CorruptIndexException, IOException {
+	int count = 0;
+	String query =
+		"SELECT ?uri ?subject WHERE { "
+		+ "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?subject . "
+    		+ "} ";
+	logger.debug("query: " + query);
+	ResultSet rs = getResultSet(query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String URI = sol.get("?uri").toString();
+	    String subject = sol.get("?subject").toString();
+	    logger.info("uri: " + URI + "\tsubject: " + subject);
+	    
+	    Document theDocument = new Document();
+	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("name", subject, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("content", subject, Field.Store.NO, Field.Index.ANALYZED));
 	    theWriter.addDocument(theDocument);
 	    count++;
 	    if (count % 100000 == 0)
