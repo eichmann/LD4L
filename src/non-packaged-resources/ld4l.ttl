@@ -1,0 +1,151 @@
+@prefix fuseki:  <http://jena.apache.org/fuseki#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix tdb:     <http://jena.hpl.hp.com/2008/tdb#> .
+@prefix ja:      <http://jena.hpl.hp.com/2005/11/Assembler#> .
+@prefix :        <#> .
+
+########################
+
+[] rdf:type fuseki:Server ;
+   fuseki:services (
+     <#cornell>
+     <#harvard>
+     <#stanford>
+     <#combined>
+     <#dbpedia>
+     <#viaf>
+     <#fast>
+     <#geonames>
+     <#grid>
+     <#loc_names>
+     <#loc_subjects>
+   ) .
+
+########################
+
+# Declaration additional assembler items.
+[] ja:loadClass "org.apache.jena.tdb.TDB" .
+
+# TDB
+tdb:DatasetTDB  rdfs:subClassOf  ja:RDFDataset .
+tdb:GraphTDB    rdfs:subClassOf  ja:Model .
+
+########################
+
+<#cornell>  rdf:type fuseki:Service ;
+    fuseki:name              "cornell" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#cornellTDB> ;
+    .
+
+<#harvard>  rdf:type fuseki:Service ;
+    fuseki:name              "harvard" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#harvardTDB> ;
+    .
+<#stanford>  rdf:type fuseki:Service ;
+    fuseki:name              "stanford" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#stanfordTDB> ;
+    .
+
+<#combined>  rdf:type fuseki:Service ;
+    fuseki:name              "combined" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#combinedTDB> ;
+    .
+<#dbpedia>  rdf:type fuseki:Service ;
+    fuseki:name              "dbpedia" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#dbpediaTDB> ;
+    .
+<#viaf>  rdf:type fuseki:Service ;
+    fuseki:name              "viaf" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#viafTDB> ;
+    .
+<#fast>  rdf:type fuseki:Service ;
+    fuseki:name              "fast" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#fastTDB> ;
+    .
+<#geonames>  rdf:type fuseki:Service ;
+    fuseki:name              "geonames" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#geonamesTDB> ;
+    .
+
+<#grid>  rdf:type fuseki:Service ;
+    fuseki:name              "grid" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#gridTDB> ;
+    .
+
+<#loc_names>  rdf:type fuseki:Service ;
+    fuseki:name              "loc_names" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#loc_namesTDB> ;
+    .
+
+<#loc_subjects>  rdf:type fuseki:Service ;
+    fuseki:name              "loc_subjects" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#loc_subjectsTDB> ;
+    .
+
+<#cornellTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/Volumes/Pegasus2/LD4L/triplestores/cornell" ;
+    .
+
+<#harvardTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/Volumes/Pegasus2/LD4L/triplestores/harvard" ;
+    .
+
+<#stanfordTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/Volumes/Pegasus2/LD4L/triplestores/stanford" ;
+    .
+
+<#combinedTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/Volumes/Pegasus2/LD4L/triplestores/combined" ;
+    .
+    
+<#dbpediaTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/Volumes/Pegasus2/dbpedia_2016-14" ;
+    .
+    
+<#viafTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/Volumes/Pegasus2/viaf" ;
+    .
+    
+<#fastTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/Volumes/Pegasus2/FAST" ;
+	.
+	
+<#geonamesTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/Volumes/Pegasus2/geonames" ;
+	.
+	
+<#gridTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/Volumes/Pegasus2/grid" ;
+	.
+    
+<#loc_namesTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/Volumes/Pegasus2/LoC/names" ;
+    .
+    
+<#loc_subjectsTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/Volumes/Pegasus2/LoC/subjects" ;
+    .
+ 

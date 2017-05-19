@@ -25,7 +25,7 @@ import org.apache.lucene.store.LockObtainFailedException;
 public class Indexer {
     protected static Logger logger = Logger.getLogger(Indexer.class);
     
-    static boolean useSPARQL = false;
+    static boolean useSPARQL = true;
     static Dataset dataset = null;
     static String tripleStore = null;
     static String endpoint = null;
@@ -47,19 +47,26 @@ public class Indexer {
 	tripleStore = dataPath + args[0];
 	endpoint = "http://guardian.slis.uiowa.edu:3030/" + args[0] + "/sparql";
 	
-	if (args.length > 0 && args[1].equals("work"))
+	if (args.length > 1 && args[1].equals("work"))
 	    lucenePath = dataPath + "lucene/" + args[0] + "/" + args[1];
-	if (args.length > 0 && args[1].equals("person"))
+	if (args.length > 1 && args[1].equals("person"))
 	    lucenePath = dataPath + "lucene/" + args[0] + "/" + args[1];
+	if (args.length > 0 && args[0].equals("loc_names"))
+	    lucenePath = dataPath + "lucene/loc/names";
+	if (args.length > 0 && args[0].equals("loc_subjects"))
+	    lucenePath = dataPath + "lucene/loc/subjects";
 
+	logger.info("endpoint: " + endpoint);
 	logger.info("data path: " + dataPath);
 	logger.info("lucenePath: " + lucenePath);
 	IndexWriter theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath)), new StandardAnalyzer(org.apache.lucene.util.Version.LUCENE_30), true, IndexWriter.MaxFieldLength.UNLIMITED);
 	
-	if (args.length > 0 && args[1].equals("work"))
+	if (args.length > 1 && args[1].equals("work"))
 	    indexWorkTitles(theWriter);
-	if (args.length > 0 && args[1].equals("person"))
+	if (args.length > 1 && args[1].equals("person"))
 	    indexPersons(theWriter);
+	if (args.length > 0 && args[0].equals("loc_names"))
+	    indexLoCNames(theWriter);
 
 	logger.info("optimizing index...");
 	theWriter.optimize();
@@ -119,7 +126,33 @@ public class Indexer {
 	    if (count % 100000 == 0)
 		logger.info("count: " + count);
 	}
-	logger.info("total titles: " + count);
+	logger.info("total persons: " + count);
+    }
+
+    static void indexLoCNames(IndexWriter theWriter) throws CorruptIndexException, IOException {
+	int count = 0;
+	String query =
+		"SELECT ?uri ?name WHERE { "
+		+ "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
+    		+ "} limit 100000";
+	logger.info("query: " + query);
+	ResultSet rs = getResultSet(query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String nameURI = sol.get("?uri").toString();
+	    String name = sol.get("?name").toString();
+	    logger.info("uri: " + nameURI + "\tname: " + name);
+	    
+	    Document theDocument = new Document();
+	    theDocument.add(new Field("uri", nameURI, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("name", name, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("content", name, Field.Store.NO, Field.Index.ANALYZED));
+	    theWriter.addDocument(theDocument);
+	    count++;
+	    if (count % 100000 == 0)
+		logger.info("count: " + count);
+	}
+	logger.info("total names: " + count);
     }
 
     static public ResultSet getResultSet(String queryString) {
