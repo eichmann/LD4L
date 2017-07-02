@@ -141,6 +141,7 @@ public class Indexer {
 	String query =
 		"SELECT ?uri ?name WHERE { "
 		+ "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
+		+ "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#PersonalName> . "
     		+ "} ";
 	logger.debug("query: " + query);
 	ResultSet rs = getResultSet(query);
@@ -152,18 +153,38 @@ public class Indexer {
 	    if (!URI.startsWith("http:"))
 		continue;
 	    
-	    logger.debug("uri: " + URI + "\tname: " + name);
+	    logger.info("uri: " + URI + "\tname: " + name);
 	    
 	    Document theDocument = new Document();
 	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("name", name, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("content", name, Field.Store.NO, Field.Index.ANALYZED));
+	    annotateLoCName(URI, theDocument, "hasVariant", "variantLabel");
+	    annotateLoCName(URI, theDocument, "fieldOfActivity", "label");
+	    annotateLoCName(URI, theDocument, "fieldOfActivity", "authoritativeLabel");
+	    annotateLoCName(URI, theDocument, "occupation", "authoritativeLabel");
 	    theWriter.addDocument(theDocument);
 	    count++;
 	    if (count % 100000 == 0)
 		logger.info("count: " + count);
 	}
 	logger.info("total names: " + count);
+    }
+    
+    static void annotateLoCName(String URI, Document theDocument, String predicate1, String predicate2) {
+	String query =
+		"SELECT ?value WHERE { "
+		+ "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#" + predicate1 + "> ?o . "
+		+ "?o <http://www.loc.gov/mads/rdf/v1#" + predicate2 + "> ?value . "
+    		+ "} ";
+	logger.debug("query: " + query);
+	ResultSet rs = getResultSet(query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String value = sol.get("?value").toString();
+	    logger.info("\tpredicate1: " + predicate1 + "\tvalue: " + value);
+	    theDocument.add(new Field("content", value, Field.Store.NO, Field.Index.ANALYZED));
+	}	
     }
 
     static void indexLoCSubjects(IndexWriter theWriter) throws CorruptIndexException, IOException {
