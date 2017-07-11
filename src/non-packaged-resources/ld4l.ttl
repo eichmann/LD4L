@@ -20,6 +20,10 @@
      <#grid>
      <#loc_names>
      <#loc_subjects>
+     <#getty_all>
+     <#getty_aat>
+     <#getty_tgn>
+     <#getty_ulan>
    ) .
 
 ########################
@@ -94,6 +98,30 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     fuseki:dataset           <#loc_subjectsTDB> ;
     .
 
+<#getty_all>  rdf:type fuseki:Service ;
+    fuseki:name              "getty_all" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#getty_allTDB> ;
+    .
+
+<#getty_aat>  rdf:type fuseki:Service ;
+    fuseki:name              "getty_aat" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#getty_aatTDB> ;
+    .
+
+<#getty_tgn>  rdf:type fuseki:Service ;
+    fuseki:name              "getty_tgn" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#getty_tgnTDB> ;
+    .
+
+<#getty_ulan>  rdf:type fuseki:Service ;
+    fuseki:name              "getty_ulan" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#getty_ulanTDB> ;
+    .
+
 <#cornellTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/Volumes/Pegasus2/LD4L/triplestores/cornell" ;
@@ -148,4 +176,24 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     rdf:type tdb:DatasetTDB ;
     tdb:location "/Volumes/Pegasus2/LoC/subjects" ;
     .
- 
+
+<#getty_allTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/Volumes/Pegasus2/Getty/all" ;
+    .
+
+<#getty_aatTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/Volumes/Pegasus2/Getty/AAT" ;
+    .
+    
+<#getty_tgnTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/Volumes/Pegasus2/Getty/TGN" ;
+    .
+    
+<#getty_ulanTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/Volumes/Pegasus2/Getty/ULAN" ;
+    .
+    
