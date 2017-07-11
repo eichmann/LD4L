@@ -44,10 +44,10 @@ public class Indexer {
     public static void main(String[] args) throws CorruptIndexException, LockObtainFailedException, IOException {
 	PropertyConfigurator.configure("log4j.info");
 
-	if (args.length == 1 && args[0].equals("loc_names"))
-	    tripleStore = dataPath + "loc/names";
-	else if (args.length == 1 && args[0].equals("loc_subjects"))
-	    tripleStore = dataPath + "loc/subjects";
+	if (args.length > 1 && args[0].equals("loc") && !args[1].equals("subjects"))
+	    tripleStore = dataPath + "LoC/names";
+	else if (args.length > 1 && args[0].equals("loc") && args[1].equals("subjects"))
+	    tripleStore = dataPath + "LoC/subjects";
 	else
 	    tripleStore = dataPath + args[0];
 	endpoint = "http://guardian.slis.uiowa.edu:3030/" + args[0] + "/sparql";
@@ -56,13 +56,19 @@ public class Indexer {
 	    lucenePath = dataPath + "lucene/" + args[0] + "/" + args[1];
 	if (args.length > 1 && args[1].equals("person"))
 	    lucenePath = dataPath + "lucene/" + args[0] + "/" + args[1];
-	if (args.length > 0 && args[0].equals("loc_names"))
+	if (args.length > 1 && args[0].equals("loc") && args[1].equals("names"))
 	    lucenePath = dataPath + "lucene/loc/names";
-	if (args.length > 0 && args[0].equals("loc_subjects"))
+	if (args.length > 1 && args[0].equals("loc") && args[1].equals("persons"))
+	    lucenePath = dataPath + "lucene/loc/persons";
+	if (args.length > 1 && args[0].equals("loc") && args[1].equals("organizations"))
+	    lucenePath = dataPath + "lucene/loc/organizations";
+	if (args.length > 1 && args[0].equals("loc") && args[1].equals("titles"))
+	    lucenePath = dataPath + "lucene/loc/titles";
+	if (args.length > 1 && args[0].equals("loc") && args[1].equals("subjects"))
 	    lucenePath = dataPath + "lucene/loc/subjects";
 
 	logger.info("endpoint: " + endpoint);
-	logger.info("data path: " + dataPath);
+	logger.info("triplestore: " + tripleStore);
 	logger.info("lucenePath: " + lucenePath);
 	IndexWriter theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath)), new StandardAnalyzer(org.apache.lucene.util.Version.LUCENE_30), true, IndexWriter.MaxFieldLength.UNLIMITED);
 	
@@ -70,9 +76,15 @@ public class Indexer {
 	    indexWorkTitles(theWriter);
 	if (args.length > 1 && args[1].equals("person"))
 	    indexPersons(theWriter);
-	if (args.length > 0 && args[0].equals("loc_names"))
-	    indexLoCNames(theWriter);
-	if (args.length > 0 && args[0].equals("loc_subjects"))
+	if (args.length > 0 && args[0].equals("loc") && args[1].equals("names"))
+	    indexLoCNames(theWriter, "");
+	if (args.length > 0 && args[0].equals("loc") && args[1].equals("persons"))
+	    indexLoCNames(theWriter, "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#PersonalName> . ");
+	if (args.length > 0 && args[0].equals("loc") && args[1].equals("organizations"))
+	    indexLoCNames(theWriter, "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#CorporateName> . ");
+	if (args.length > 0 && args[0].equals("loc") && args[1].equals("titles"))
+	    indexLoCNames(theWriter, "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Title> . ");
+	if (args.length > 0 && args[0].equals("loc") && args[1].equals("subjects"))
 	    indexLoCSubjects(theWriter);
 
 	logger.info("optimizing index...");
@@ -136,14 +148,14 @@ public class Indexer {
 	logger.info("total persons: " + count);
     }
 
-    static void indexLoCNames(IndexWriter theWriter) throws CorruptIndexException, IOException {
+    static void indexLoCNames(IndexWriter theWriter, String typeConstraint) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
 		"SELECT ?uri ?name WHERE { "
 		+ "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
-		+ "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#PersonalName> . "
+		+ typeConstraint
     		+ "} ";
-	logger.debug("query: " + query);
+	logger.info("query: " + query);
 	ResultSet rs = getResultSet(query);
 	while (rs.hasNext()) {
 	    QuerySolution sol = rs.nextSolution();
