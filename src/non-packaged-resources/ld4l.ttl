@@ -18,6 +18,7 @@
      <#fast>
      <#geonames>
      <#grid>
+     <#loc_genre>
      <#loc_names>
      <#loc_subjects>
      <#getty_all>
@@ -84,6 +85,12 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     fuseki:name              "grid" ;       # http://host:port/tdb
     fuseki:serviceQuery      "sparql" ;    # SPARQL query service
     fuseki:dataset           <#gridTDB> ;
+    .
+
+<#loc_genre>  rdf:type fuseki:Service ;
+    fuseki:name              "loc_genre" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#loc_genreTDB> ;
     .
 
 <#loc_names>  rdf:type fuseki:Service ;
@@ -166,6 +173,11 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     rdf:type tdb:DatasetTDB ;
     tdb:location "/Volumes/Pegasus2/grid" ;
 	.
+    
+<#loc_genreTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/Volumes/Pegasus2/LoC/genre" ;
+    .
     
 <#loc_namesTDB>
     rdf:type tdb:DatasetTDB ;

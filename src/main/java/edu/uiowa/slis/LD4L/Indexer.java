@@ -30,7 +30,7 @@ public class Indexer {
     static String tripleStore = null;
     static String endpoint = null;
     
-    static String dataPath = "/Volumes/Pegasus3/LD4L/";
+    static String dataPath = "/Volumes/LD4L/";
     static String lucenePath = null;
     static String prefix = 
 	    "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> "
@@ -44,10 +44,12 @@ public class Indexer {
     public static void main(String[] args) throws CorruptIndexException, LockObtainFailedException, IOException {
 	PropertyConfigurator.configure("log4j.info");
 
-	if (args.length > 1 && args[0].equals("loc") && !args[1].equals("subjects"))
+	if (args.length > 1 && args[0].equals("loc") && !args[1].equals("subjects") && !args[1].equals("genre"))
 	    tripleStore = dataPath + "LoC/names";
 	else if (args.length > 1 && args[0].equals("loc") && args[1].equals("subjects"))
 	    tripleStore = dataPath + "LoC/subjects";
+	else if (args.length > 1 && args[0].equals("loc") && args[1].equals("genre"))
+	    tripleStore = dataPath + "LoC/genre";
 	else
 	    tripleStore = dataPath + args[0];
 	endpoint = "http://guardian.slis.uiowa.edu:3030/" + args[0] + "/sparql";
@@ -66,6 +68,8 @@ public class Indexer {
 	    lucenePath = dataPath + "lucene/loc/titles";
 	if (args.length > 1 && args[0].equals("loc") && args[1].equals("subjects"))
 	    lucenePath = dataPath + "lucene/loc/subjects";
+	if (args.length > 1 && args[0].equals("loc") && args[1].equals("genre"))
+	    lucenePath = dataPath + "lucene/loc/genre";
 
 	logger.info("endpoint: " + endpoint);
 	logger.info("triplestore: " + tripleStore);
@@ -86,6 +90,8 @@ public class Indexer {
 	    indexLoCNames(theWriter, "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Title> . ");
 	if (args.length > 0 && args[0].equals("loc") && args[1].equals("subjects"))
 	    indexLoCSubjects(theWriter);
+	if (args.length > 0 && args[0].equals("loc") && args[1].equals("genre"))
+	    indexLoCGenre(theWriter);
 
 	logger.info("optimizing index...");
 	theWriter.optimize();
@@ -216,6 +222,37 @@ public class Indexer {
 		continue;
 	    
 	    logger.debug("uri: " + URI + "\tsubject: " + subject);
+	    
+	    Document theDocument = new Document();
+	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("name", subject, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("content", subject, Field.Store.NO, Field.Index.ANALYZED));
+	    theWriter.addDocument(theDocument);
+	    count++;
+	    if (count % 100000 == 0)
+		logger.info("count: " + count);
+	}
+	logger.info("total names: " + count);
+    }
+
+    static void indexLoCGenre(IndexWriter theWriter) throws CorruptIndexException, IOException {
+	int count = 0;
+	String query =
+		"SELECT ?uri ?subject WHERE { "
+		+ "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?subject . "
+    		+ "} ";
+	logger.info("triplestore: " + tripleStore);
+	logger.info("query: " + query);
+	ResultSet rs = getResultSet(query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String URI = sol.get("?uri").toString();
+	    String subject = sol.get("?subject").toString();
+	    
+	    if (!URI.startsWith("http:"))
+		continue;
+	    
+	    logger.info("uri: " + URI + "\tsubject: " + subject);
 	    
 	    Document theDocument = new Document();
 	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
