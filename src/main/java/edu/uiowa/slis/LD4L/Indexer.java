@@ -30,7 +30,7 @@ public class Indexer {
     static String tripleStore = null;
     static String endpoint = null;
     
-    static String dataPath = "/Volumes/LD4L/";
+    static String dataPath = "/usr/local/RAID/";
     static String lucenePath = null;
     static String prefix = 
 	    "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> "
@@ -52,7 +52,7 @@ public class Indexer {
 	    tripleStore = dataPath + "LoC/genre";
 	else
 	    tripleStore = dataPath + args[0];
-	endpoint = "http://guardian.slis.uiowa.edu:3030/" + args[0] + "/sparql";
+	endpoint = "http://services.ld4l.org/fuseki/" + args[0] + "/sparql";
 	
 	if (args.length > 1 && args[1].equals("work"))
 	    lucenePath = dataPath + "lucene/" + args[0] + "/" + args[1];

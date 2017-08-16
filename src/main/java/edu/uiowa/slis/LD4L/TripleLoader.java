@@ -32,7 +32,7 @@ import org.apache.log4j.PropertyConfigurator;
 public class TripleLoader implements Runnable {
     static boolean local = false;
     static Logger logger = Logger.getLogger(TripleLoader.class);
-    static String pathPrefix = local ? "/Volumes/Spare1/LD4L/" : "/Volumes/Pegasus2/Corpora/LD4L/draft.ld4l.org/downloads/rdf_files/";
+    static String pathPrefix = local ? "/Volumes/Spare1/LD4L/" : "/usr/local/RAID/Corpora/LD4L/draft.ld4l.org/downloads/rdf_files/";
     static String fileName = "";
     static PipedRDFIterator<Triple> iter = null;
     static PipedRDFStream<Triple> inputStream = null;
@@ -43,11 +43,11 @@ public class TripleLoader implements Runnable {
     public static void main(String[] args) throws Exception {
 	PropertyConfigurator.configure("log4j.error");
 
-	Model schema = FileManager.get().loadModel(local ? "file:/Users/eichmann/downloads/ontology.rdf" : "file:/Volumes/Pegasus2/LD4L/ontology.rdf");
+	Model schema = FileManager.get().loadModel(local ? "file:/Users/eichmann/downloads/ontology.rdf" : "file:/usr/local/RAID/LD4L/ontology.rdf");
 	reasoner = ReasonerRegistry.getOWLMicroReasoner();
 	reasoner = reasoner.bindSchema(schema);
 	
-//	printstream = new PrintStream((local ? "/Volumes/Spare2/" : "/Volumes/Pegasus2/LD4L/inference_dumps/") + args[0] + ".nt");
+//	printstream = new PrintStream((local ? "/Volumes/Spare2/" : "/usr/local/RAID/LD4L/inference_dumps/") + args[0] + ".nt");
 
 	switch (args[0]) {
 	case "cornell":
