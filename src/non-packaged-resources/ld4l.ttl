@@ -131,81 +131,81 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
 
 <#cornellTDB>
     rdf:type tdb:DatasetTDB ;
-    tdb:location "/Volumes/Pegasus2/LD4L/triplestores/cornell" ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/cornell" ;
     .
 
 <#harvardTDB>
     rdf:type tdb:DatasetTDB ;
-    tdb:location "/Volumes/Pegasus2/LD4L/triplestores/harvard" ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/harvard" ;
     .
 
 <#stanfordTDB>
     rdf:type tdb:DatasetTDB ;
-    tdb:location "/Volumes/Pegasus2/LD4L/triplestores/stanford" ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/stanford" ;
     .
 
 <#combinedTDB>
     rdf:type tdb:DatasetTDB ;
-    tdb:location "/Volumes/Pegasus2/LD4L/triplestores/combined" ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/combined" ;
     .
     
 <#dbpediaTDB>
     rdf:type tdb:DatasetTDB ;
-    tdb:location "/Volumes/Pegasus2/dbpedia_2016-14" ;
+    tdb:location "/usr/local/RAID/dbpedia_2016-14" ;
     .
     
 <#viafTDB>
     rdf:type tdb:DatasetTDB ;
-    tdb:location "/Volumes/Pegasus2/viaf" ;
+    tdb:location "/usr/local/RAID/viaf" ;
     .
     
 <#fastTDB>
     rdf:type tdb:DatasetTDB ;
-    tdb:location "/Volumes/Pegasus2/FAST" ;
+    tdb:location "/usr/local/RAID/FAST" ;
 	.
 	
 <#geonamesTDB>
     rdf:type tdb:DatasetTDB ;
-    tdb:location "/Volumes/Pegasus2/geonames" ;
+    tdb:location "/usr/local/RAID/geonames" ;
 	.
 	
 <#gridTDB>
     rdf:type tdb:DatasetTDB ;
-    tdb:location "/Volumes/Pegasus2/grid" ;
+    tdb:location "/usr/local/RAID/grid" ;
 	.
     
 <#loc_genreTDB>
     rdf:type tdb:DatasetTDB ;
-    tdb:location "/Volumes/Pegasus2/LoC/genre" ;
+    tdb:location "/usr/local/RAID/LoC/genre" ;
     .
     
 <#loc_namesTDB>
     rdf:type tdb:DatasetTDB ;
-    tdb:location "/Volumes/Pegasus2/LoC/names" ;
+    tdb:location "/usr/local/RAID/LoC/names" ;
     .
     
 <#loc_subjectsTDB>
     rdf:type tdb:DatasetTDB ;
-    tdb:location "/Volumes/Pegasus2/LoC/subjects" ;
+    tdb:location "/usr/local/RAID/LoC/subjects" ;
     .
 
 <#getty_allTDB>
     rdf:type tdb:DatasetTDB ;
-    tdb:location "/Volumes/Pegasus2/Getty/all" ;
+    tdb:location "/usr/local/RAID/Getty/all" ;
     .
 
 <#getty_aatTDB>
     rdf:type tdb:DatasetTDB ;
-    tdb:location "/Volumes/Pegasus2/Getty/AAT" ;
+    tdb:location "/usr/local/RAID/Getty/AAT" ;
     .
     
 <#getty_tgnTDB>
     rdf:type tdb:DatasetTDB ;
-    tdb:location "/Volumes/Pegasus2/Getty/TGN" ;
+    tdb:location "/usr/local/RAID/Getty/TGN" ;
     .
     
 <#getty_ulanTDB>
     rdf:type tdb:DatasetTDB ;
-    tdb:location "/Volumes/Pegasus2/Getty/ULAN" ;
+    tdb:location "/usr/local/RAID/Getty/ULAN" ;
     .
     
