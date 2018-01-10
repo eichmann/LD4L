@@ -13,6 +13,7 @@
      <#harvard>
      <#stanford>
      <#combined>
+     <#stanford2>
      <#dbpedia>
      <#viaf>
      <#fast>
@@ -49,6 +50,7 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     fuseki:serviceQuery      "sparql" ;    # SPARQL query service
     fuseki:dataset           <#harvardTDB> ;
     .
+
 <#stanford>  rdf:type fuseki:Service ;
     fuseki:name              "stanford" ;       # http://host:port/tdb
     fuseki:serviceQuery      "sparql" ;    # SPARQL query service
@@ -60,6 +62,12 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     fuseki:serviceQuery      "sparql" ;    # SPARQL query service
     fuseki:dataset           <#combinedTDB> ;
     .
+<#stanford2>  rdf:type fuseki:Service ;
+    fuseki:name              "stanford2" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#stanfordTDB2> ;
+    .
+
 <#dbpedia>  rdf:type fuseki:Service ;
     fuseki:name              "dbpedia" ;       # http://host:port/tdb
     fuseki:serviceQuery      "sparql" ;    # SPARQL query service
@@ -149,6 +157,11 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     tdb:location "/usr/local/RAID/LD4L/triplestores/combined" ;
     .
     
+<#stanfordTDB2>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/stanford2" ;
+    .
+
 <#dbpediaTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/dbpedia_2016-14" ;
