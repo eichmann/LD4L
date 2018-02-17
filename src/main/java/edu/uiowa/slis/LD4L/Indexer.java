@@ -36,6 +36,7 @@ public class Indexer {
 	    "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> "
 	    + " PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
 	    + " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
+	    + " PREFIX skos: <http://www.w3.org/2004/02/skos/core#> "
 	    + " PREFIX mads: <http://www.loc.gov/mads/rdf/v1#> "
 	    + " PREFIX bib: <http://bib.ld4l.org/ontology/> ";
 
@@ -44,7 +45,9 @@ public class Indexer {
     public static void main(String[] args) throws CorruptIndexException, LockObtainFailedException, IOException {
 	PropertyConfigurator.configure("log4j.info");
 
-	if (args.length > 1 && args[0].equals("loc") && !args[1].equals("subjects") && !args[1].equals("genre"))
+	if (args.length == 1 && args[0].equals("nalt"))
+	    tripleStore = dataPath + "NALT";
+	else if (args.length > 1 && args[0].equals("loc") && !args[1].equals("subjects") && !args[1].equals("genre"))
 	    tripleStore = dataPath + "LoC/names";
 	else if (args.length > 1 && args[0].equals("loc") && args[1].equals("subjects"))
 	    tripleStore = dataPath + "LoC/subjects";
@@ -54,7 +57,9 @@ public class Indexer {
 	    tripleStore = dataPath + args[0];
 	endpoint = "http://services.ld4l.org/fuseki/" + args[0] + "/sparql";
 	
-	if (args.length > 1 && args[1].equals("work"))
+	if (args.length == 1 && args[0].equals("nalt"))
+	    lucenePath = dataPath + "LD4L/lucene/" + args[0] + "/";
+	else if (args.length > 1 && args[1].equals("work"))
 	    lucenePath = dataPath + "lucene/" + args[0] + "/" + args[1];
 	if (args.length > 1 && args[1].equals("person"))
 	    lucenePath = dataPath + "lucene/" + args[0] + "/" + args[1];
@@ -76,6 +81,8 @@ public class Indexer {
 	logger.info("lucenePath: " + lucenePath);
 	IndexWriter theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath)), new StandardAnalyzer(org.apache.lucene.util.Version.LUCENE_30), true, IndexWriter.MaxFieldLength.UNLIMITED);
 	
+	if (args.length == 1 && args[0].equals("nalt"))
+	    indexNALT(theWriter);
 	if (args.length > 1 && args[1].equals("work"))
 	    indexWorkTitles(theWriter);
 	if (args.length > 1 && args[1].equals("person"))
@@ -96,6 +103,50 @@ public class Indexer {
 	logger.info("optimizing index...");
 	theWriter.optimize();
 	theWriter.close();
+    }
+    
+    static void indexNALT(IndexWriter theWriter) throws CorruptIndexException, IOException {
+	int count = 0;
+	String query =
+		"SELECT DISTINCT ?uri ?label ?spanish WHERE { "
+		+ "?uri rdf:type skos:Concept . "
+		+ "?uri skos:prefLabel ?label . "
+		+ "?uri skos:prefLabel ?spanish . "
+		+ "FILTER (lang(?label) = 'en') "
+		+ "FILTER (lang(?spanish) = 'es') "
+    		+ "}";
+	ResultSet rs = getResultSet(prefix + query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String uri = sol.get("?uri").toString();
+	    String label = sol.get("?label").asLiteral().getString();
+	    String spanish = sol.get("?spanish").asLiteral().getString();
+	    logger.info("uri: " + uri + "\tlabel: " + label + "\tspanish: " + spanish);
+	    
+	    Document theDocument = new Document();
+	    theDocument.add(new Field("uri", uri, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("title", label, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("content", label, Field.Store.NO, Field.Index.ANALYZED));
+	    theDocument.add(new Field("content", spanish, Field.Store.NO, Field.Index.ANALYZED));
+	    
+	    String query2 = 
+		  "SELECT DISTINCT ?altlabel WHERE { "
+			  + "<" + uri + "> skos:altLabel ?altlabel . "
+		+ "}";
+	    ResultSet ars = getResultSet(prefix + query2);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String altlabel = asol.get("?altlabel").asLiteral().getString();
+		logger.info("\talt label: " + altlabel);
+		theDocument.add(new Field("content", altlabel, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    theWriter.addDocument(theDocument);
+	    count++;
+	    if (count % 100000 == 0)
+		logger.info("count: " + count);
+	}
+	logger.info("total concepts: " + count);
     }
     
     static void indexWorkTitles(IndexWriter theWriter) throws CorruptIndexException, IOException {

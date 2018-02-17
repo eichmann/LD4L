@@ -26,6 +26,7 @@
      <#getty_aat>
      <#getty_tgn>
      <#getty_ulan>
+     <#nalt>
    ) .
 
 ########################
@@ -137,6 +138,12 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     fuseki:dataset           <#getty_ulanTDB> ;
     .
 
+<#nalt>  rdf:type fuseki:Service ;
+    fuseki:name              "nalt" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#naltTDB> ;
+    .
+
 <#cornellTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LD4L/triplestores/cornell" ;
@@ -221,4 +228,8 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/Getty/ULAN" ;
     .
-    
+
+<#naltTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/NALT" ;
+    .
