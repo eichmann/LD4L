@@ -27,6 +27,7 @@
      <#getty_tgn>
      <#getty_ulan>
      <#nalt>
+     <#agrovoc>
    ) .
 
 ########################
@@ -144,6 +145,12 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     fuseki:dataset           <#naltTDB> ;
     .
 
+<#agrovoc>  rdf:type fuseki:Service ;
+    fuseki:name              "agrovoc" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#agrovocTDB> ;
+    .
+
 <#cornellTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LD4L/triplestores/cornell" ;
@@ -233,3 +240,9 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/NALT" ;
     .
+
+<#agrovocTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/Agrovoc" ;
+    .
+    
