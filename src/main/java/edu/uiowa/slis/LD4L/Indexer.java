@@ -25,7 +25,7 @@ import org.apache.lucene.store.LockObtainFailedException;
 public class Indexer {
     protected static Logger logger = Logger.getLogger(Indexer.class);
     
-    static boolean useSPARQL = false;
+    static boolean useSPARQL = true;
     static Dataset dataset = null;
     static String tripleStore = null;
     static String endpoint = null;
@@ -45,7 +45,9 @@ public class Indexer {
     public static void main(String[] args) throws CorruptIndexException, LockObtainFailedException, IOException {
 	PropertyConfigurator.configure("log4j.info");
 
-	if (args.length == 1 && args[0].equals("nalt"))
+	if (args.length == 1 && args[0].equals("agrovoc"))
+	    tripleStore = dataPath + "Agrovoc";
+	else if (args.length == 1 && args[0].equals("nalt"))
 	    tripleStore = dataPath + "NALT";
 	else if (args.length > 1 && args[0].equals("loc") && !args[1].equals("subjects") && !args[1].equals("genre"))
 	    tripleStore = dataPath + "LoC/names";
@@ -57,7 +59,9 @@ public class Indexer {
 	    tripleStore = dataPath + args[0];
 	endpoint = "http://services.ld4l.org/fuseki/" + args[0] + "/sparql";
 	
-	if (args.length == 1 && args[0].equals("nalt"))
+	if (args.length == 1 && args[0].equals("agrovoc"))
+	    lucenePath = dataPath + "LD4L/lucene/" + args[0] + "/";
+	else if (args.length == 1 && args[0].equals("nalt"))
 	    lucenePath = dataPath + "LD4L/lucene/" + args[0] + "/";
 	else if (args.length > 1 && args[1].equals("work"))
 	    lucenePath = dataPath + "lucene/" + args[0] + "/" + args[1];
@@ -81,6 +85,8 @@ public class Indexer {
 	logger.info("lucenePath: " + lucenePath);
 	IndexWriter theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath)), new StandardAnalyzer(org.apache.lucene.util.Version.LUCENE_30), true, IndexWriter.MaxFieldLength.UNLIMITED);
 	
+	if (args.length == 1 && args[0].equals("agrovoc"))
+	    indexAgrovoc(theWriter);
 	if (args.length == 1 && args[0].equals("nalt"))
 	    indexNALT(theWriter);
 	if (args.length > 1 && args[1].equals("work"))
@@ -103,6 +109,58 @@ public class Indexer {
 	logger.info("optimizing index...");
 	theWriter.optimize();
 	theWriter.close();
+    }
+    
+    static void indexAgrovoc(IndexWriter theWriter) throws CorruptIndexException, IOException {
+	int count = 0;
+	String query =
+		"SELECT DISTINCT ?uri ?label  WHERE { "
+		+ "?uri rdf:type skos:Concept . "
+		+ "?uri skos:prefLabel ?label . "
+		+ "FILTER (lang(?label) = 'en') "
+    		+ "}";
+	ResultSet rs = getResultSet(prefix + query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String uri = sol.get("?uri").toString();
+	    String label = sol.get("?label").asLiteral().getString();
+	    logger.info("uri: " + uri + "\tlabel: " + label);
+	    
+	    Document theDocument = new Document();
+	    theDocument.add(new Field("uri", uri, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("title", label, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("content", label, Field.Store.NO, Field.Index.ANALYZED));
+	    
+	    String query1 = 
+		  "SELECT DISTINCT ?preflabel WHERE { "
+			  + "<" + uri + "> skos:prefLabel ?preflabel . "
+		+ "}";
+	    ResultSet prs = getResultSet(prefix + query1);
+	    while (prs.hasNext()) {
+		QuerySolution psol = prs.nextSolution();
+		String preflabel = psol.get("?preflabel").asLiteral().getString();
+		logger.info("\tpref label: " + preflabel);
+		theDocument.add(new Field("content", preflabel, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    String query2 = 
+		  "SELECT DISTINCT ?altlabel WHERE { "
+			  + "<" + uri + "> skos:altLabel ?altlabel . "
+		+ "}";
+	    ResultSet ars = getResultSet(prefix + query2);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String altlabel = asol.get("?altlabel").asLiteral().getString();
+		logger.info("\talt label: " + altlabel);
+		theDocument.add(new Field("content", altlabel, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    theWriter.addDocument(theDocument);
+	    count++;
+	    if (count % 100000 == 0)
+		logger.info("count: " + count);
+	}
+	logger.info("total concepts: " + count);
     }
     
     static void indexNALT(IndexWriter theWriter) throws CorruptIndexException, IOException {
