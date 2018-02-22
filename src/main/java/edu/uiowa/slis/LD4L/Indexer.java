@@ -47,25 +47,34 @@ public class Indexer {
     public static void main(String[] args) throws CorruptIndexException, LockObtainFailedException, IOException {
 	PropertyConfigurator.configure("log4j.info");
 
-	if (args.length == 1 && args[0].equals("agrovoc"))
+	if (args.length == 1 && args[0].equals("agrovoc")) {
 	    tripleStore = dataPath + "Agrovoc";
-	else if (args.length == 1 && args[0].equals("nalt"))
+	    endpoint = "http://services.ld4l.org/fuseki/" + args[0] + "/sparql";
+	} else if (args.length == 1 && args[0].equals("nalt")) {
 	    tripleStore = dataPath + "NALT";
-	else if (args.length > 1 && args[0].equals("loc") && !args[1].equals("subjects") && !args[1].equals("genre"))
+	    endpoint = "http://services.ld4l.org/fuseki/" + args[0] + "/sparql";
+	} else if (args.length > 1 && args[0].equals("loc") && !args[1].equals("subjects") && !args[1].equals("genre")) {
 	    tripleStore = dataPath + "LoC/names";
-	else if (args.length > 1 && args[0].equals("loc") && args[1].equals("subjects"))
+	    endpoint = "http://services.ld4l.org/fuseki/loc_names/sparql";
+	} else if (args.length > 1 && args[0].equals("loc") && args[1].equals("subjects")) {
 	    tripleStore = dataPath + "LoC/subjects";
-	else if (args.length > 1 && args[0].equals("loc") && args[1].equals("genre"))
+	    endpoint = "http://services.ld4l.org/fuseki/loc_subjects/sparql";
+	} else if (args.length > 1 && args[0].equals("loc") && args[1].equals("genre")) {
 	    tripleStore = dataPath + "LoC/genre";
-	else if (args.length > 1 && args[0].equals("getty") && args[1].equals("aat"))
+	    endpoint = "http://services.ld4l.org/fuseki/loc_genre/sparql";
+	} else if (args.length > 1 && args[0].equals("getty") && args[1].equals("aat")) {
 	    tripleStore = dataPath + "Getty/AAT";
-	else if (args.length > 1 && args[0].equals("getty") && args[1].equals("tgn"))
+	    endpoint = "http://services.ld4l.org/fuseki/getty_aat/sparql";
+	} else if (args.length > 1 && args[0].equals("getty") && args[1].equals("tgn")) {
 	    tripleStore = dataPath + "Getty/TGN";
-	else if (args.length > 1 && args[0].equals("getty") && args[1].equals("ulan"))
+	    endpoint = "http://services.ld4l.org/fuseki/getty_tgn/sparql";
+	} else if (args.length > 1 && args[0].equals("getty") && args[1].equals("ulan")) {
 	    tripleStore = dataPath + "Getty/ULAN";
-	else
+	    endpoint = "http://services.ld4l.org/fuseki/getty_ulan/sparql";
+	} else {
 	    tripleStore = dataPath + args[0];
-	endpoint = "http://services.ld4l.org/fuseki/" + args[0] + "/sparql";
+	    endpoint = "http://services.ld4l.org/fuseki/" + args[0] + "/sparql";
+	}
 	
 	if (args.length == 1 && args[0].equals("agrovoc"))
 	    lucenePath = dataPath + "LD4L/lucene/" + args[0] + "/";
@@ -122,26 +131,29 @@ public class Indexer {
 	if (args.length > 0 && args[0].equals("loc") && args[1].equals("genre"))
 	    indexLoCGenre(theWriter);
 	if (args.length > 0 && args[0].equals("getty") && args[1].equals("aat"))
-	    indexGettyAAT(theWriter, "getty:Concept");
+	    indexGetty(theWriter, "getty:Concept");
 	if (args.length > 0 && args[0].equals("getty") && args[1].equals("tgn"))
-	    indexGettyAAT(theWriter, "getty:PhysPlaceConcept");
+	    indexGetty(theWriter, "getty:PhysPlaceConcept");
 	if (args.length > 0 && args[0].equals("getty") && args[1].equals("ulan") && args[2].equals("person"))
-	    indexGettyAAT(theWriter, "getty:PersonConcept");
+	    indexGetty(theWriter, "getty:PersonConcept");
 	if (args.length > 0 && args[0].equals("getty") && args[1].equals("ulan") && args[2].equals("organization"))
-	    indexGettyAAT(theWriter, "getty:GroupConcept");
+	    indexGetty(theWriter, "getty:GroupConcept");
 
 	logger.info("optimizing index...");
 	theWriter.optimize();
 	theWriter.close();
     }
     
-    static void indexGettyAAT(IndexWriter theWriter, String type) throws CorruptIndexException, IOException {
+    static void indexGetty(IndexWriter theWriter, String type) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
 		"SELECT DISTINCT ?uri ?label  WHERE { "
 		+ "?uri rdf:type " + type + " . "
-		+ "?uri skos:prefLabel ?label . "
-		+ "FILTER (lang(?label) = 'en') "
+		+ "  OPTIONAL { ?s skos:prefLabel ?labelUS  FILTER (lang(?labelUS) = \"en-US\") } "
+		+ "  OPTIONAL { ?s skos:prefLabel ?labelENG FILTER (langMatches(?labelENG,\"en\")) } "
+		+ "  OPTIONAL { ?s skos:prefLabel ?labelNUL FILTER (lang(?labelNUL) = \"\") } "
+		+ "  OPTIONAL { ?s skos:prefLabel ?labelANY FILTER (lang(?labelANY) != \"\") } "
+		+ "  BIND(COALESCE(?labelUS, ?labelENG, ?labelNUL, ?labelANY ) as ?label) "
     		+ "}";
 	ResultSet rs = getResultSet(prefix + query);
 	while (rs.hasNext()) {
