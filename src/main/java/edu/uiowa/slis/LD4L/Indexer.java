@@ -25,7 +25,7 @@ import org.apache.lucene.store.LockObtainFailedException;
 public class Indexer {
     protected static Logger logger = Logger.getLogger(Indexer.class);
     
-    static boolean useSPARQL = true;
+    static boolean useSPARQL = false;
     static Dataset dataset = null;
     static String tripleStore = null;
     static String endpoint = null;
@@ -37,6 +37,8 @@ public class Indexer {
 	    + " PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
 	    + " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
 	    + " PREFIX skos: <http://www.w3.org/2004/02/skos/core#> "
+	    + " PREFIX getty: <http://vocab.getty.edu/ontology#> "
+	    + " PREFIX schema: <http://schema.org/> "
 	    + " PREFIX mads: <http://www.loc.gov/mads/rdf/v1#> "
 	    + " PREFIX bib: <http://bib.ld4l.org/ontology/> ";
 
@@ -55,6 +57,12 @@ public class Indexer {
 	    tripleStore = dataPath + "LoC/subjects";
 	else if (args.length > 1 && args[0].equals("loc") && args[1].equals("genre"))
 	    tripleStore = dataPath + "LoC/genre";
+	else if (args.length > 1 && args[0].equals("getty") && args[1].equals("aat"))
+	    tripleStore = dataPath + "Getty/AAT";
+	else if (args.length > 1 && args[0].equals("getty") && args[1].equals("tgn"))
+	    tripleStore = dataPath + "Getty/TGN";
+	else if (args.length > 1 && args[0].equals("getty") && args[1].equals("ulan"))
+	    tripleStore = dataPath + "Getty/ULAN";
 	else
 	    tripleStore = dataPath + args[0];
 	endpoint = "http://services.ld4l.org/fuseki/" + args[0] + "/sparql";
@@ -79,6 +87,14 @@ public class Indexer {
 	    lucenePath = dataPath + "lucene/loc/subjects";
 	if (args.length > 1 && args[0].equals("loc") && args[1].equals("genre"))
 	    lucenePath = dataPath + "lucene/loc/genre";
+	if (args.length > 1 && args[0].equals("getty") && args[1].equals("aat"))
+	    lucenePath = dataPath + "LD4L/lucene/getty/aat";
+	if (args.length > 1 && args[0].equals("getty") && args[1].equals("tgn"))
+	    lucenePath = dataPath + "LD4L/lucene/getty/tgn";
+	if (args.length > 2 && args[0].equals("getty") && args[1].equals("ulan") && args[2].equals("person"))
+	    lucenePath = dataPath + "LD4L/lucene/getty/ulan_person";
+	if (args.length > 2 && args[0].equals("getty") && args[1].equals("ulan") && args[2].equals("organization"))
+	    lucenePath = dataPath + "LD4L/lucene/getty/ulan_organization";
 
 	logger.info("endpoint: " + endpoint);
 	logger.info("triplestore: " + tripleStore);
@@ -105,10 +121,70 @@ public class Indexer {
 	    indexLoCSubjects(theWriter);
 	if (args.length > 0 && args[0].equals("loc") && args[1].equals("genre"))
 	    indexLoCGenre(theWriter);
+	if (args.length > 0 && args[0].equals("getty") && args[1].equals("aat"))
+	    indexGettyAAT(theWriter, "getty:Concept");
+	if (args.length > 0 && args[0].equals("getty") && args[1].equals("tgn"))
+	    indexGettyAAT(theWriter, "getty:PhysPlaceConcept");
+	if (args.length > 0 && args[0].equals("getty") && args[1].equals("ulan") && args[2].equals("person"))
+	    indexGettyAAT(theWriter, "getty:PersonConcept");
+	if (args.length > 0 && args[0].equals("getty") && args[1].equals("ulan") && args[2].equals("organization"))
+	    indexGettyAAT(theWriter, "getty:GroupConcept");
 
 	logger.info("optimizing index...");
 	theWriter.optimize();
 	theWriter.close();
+    }
+    
+    static void indexGettyAAT(IndexWriter theWriter, String type) throws CorruptIndexException, IOException {
+	int count = 0;
+	String query =
+		"SELECT DISTINCT ?uri ?label  WHERE { "
+		+ "?uri rdf:type " + type + " . "
+		+ "?uri skos:prefLabel ?label . "
+		+ "FILTER (lang(?label) = 'en') "
+    		+ "}";
+	ResultSet rs = getResultSet(prefix + query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String uri = sol.get("?uri").toString();
+	    String label = sol.get("?label").asLiteral().getString();
+	    logger.info("uri: " + uri + "\tlabel: " + label);
+	    
+	    Document theDocument = new Document();
+	    theDocument.add(new Field("uri", uri, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("title", label, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("content", label, Field.Store.NO, Field.Index.ANALYZED));
+	    
+	    String query1 = 
+		  "SELECT DISTINCT ?preflabel WHERE { "
+			  + "<" + uri + "> skos:prefLabel ?preflabel . "
+		+ "}";
+	    ResultSet prs = getResultSet(prefix + query1);
+	    while (prs.hasNext()) {
+		QuerySolution psol = prs.nextSolution();
+		String preflabel = psol.get("?preflabel").asLiteral().getString();
+		logger.info("\tpref label: " + preflabel);
+		theDocument.add(new Field("content", preflabel, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    String query2 = 
+		  "SELECT DISTINCT ?altlabel WHERE { "
+			  + "<" + uri + "> skos:altLabel ?altlabel . "
+		+ "}";
+	    ResultSet ars = getResultSet(prefix + query2);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String altlabel = asol.get("?altlabel").asLiteral().getString();
+		logger.info("\talt label: " + altlabel);
+		theDocument.add(new Field("content", altlabel, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    theWriter.addDocument(theDocument);
+	    count++;
+	    if (count % 100000 == 0)
+		logger.info("count: " + count);
+	}
+	logger.info("total concepts: " + count);
     }
     
     static void indexAgrovoc(IndexWriter theWriter) throws CorruptIndexException, IOException {
