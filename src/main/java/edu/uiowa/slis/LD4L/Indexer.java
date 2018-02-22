@@ -149,16 +149,20 @@ public class Indexer {
 	String query =
 		"SELECT DISTINCT ?uri ?label  WHERE { "
 		+ "?uri rdf:type " + type + " . "
-		+ "  OPTIONAL { ?s skos:prefLabel ?labelUS  FILTER (lang(?labelUS) = \"en-US\") } "
-		+ "  OPTIONAL { ?s skos:prefLabel ?labelENG FILTER (langMatches(?labelENG,\"en\")) } "
-		+ "  OPTIONAL { ?s skos:prefLabel ?labelNUL FILTER (lang(?labelNUL) = \"\") } "
-		+ "  OPTIONAL { ?s skos:prefLabel ?labelANY FILTER (lang(?labelANY) != \"\") } "
+		+ "  OPTIONAL { ?uri skos:prefLabel ?labelUS  FILTER (lang(?labelUS) = \"en-us\") } "
+		+ "  OPTIONAL { ?uri skos:prefLabel ?labelENG FILTER (lang(?labelENG) = \"en\") } "
+		+ "  OPTIONAL { ?uri skos:prefLabel ?labelNUL FILTER (lang(?labelNUL) = \"\") } "
+		+ "  OPTIONAL { ?uri skos:prefLabel ?labelANY FILTER (lang(?labelANY) != \"\") } "
 		+ "  BIND(COALESCE(?labelUS, ?labelENG, ?labelNUL, ?labelANY ) as ?label) "
-    		+ "}";
+		+ "}";
 	ResultSet rs = getResultSet(prefix + query);
 	while (rs.hasNext()) {
 	    QuerySolution sol = rs.nextSolution();
 	    String uri = sol.get("?uri").toString();
+	    
+	    if (sol.get("?label") == null)
+		continue;
+	    
 	    String label = sol.get("?label").asLiteral().getString();
 	    logger.info("uri: " + uri + "\tlabel: " + label);
 	    
