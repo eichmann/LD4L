@@ -71,6 +71,9 @@ public class Indexer {
 	} else if (args.length > 1 && args[0].equals("getty") && args[1].equals("ulan")) {
 	    tripleStore = dataPath + "Getty/ULAN";
 	    endpoint = "http://services.ld4l.org/fuseki/getty_ulan/sparql";
+	} else if (args.length > 1 && args[0].equals("dbpedia")) {
+	    tripleStore = dataPath + "dbpedia_2016-14";
+	    endpoint = "http://services.ld4l.org/fuseki/dbpedia/sparql";
 	} else {
 	    tripleStore = dataPath + args[0];
 	    endpoint = "http://services.ld4l.org/fuseki/" + args[0] + "/sparql";
@@ -104,6 +107,10 @@ public class Indexer {
 	    lucenePath = dataPath + "LD4L/lucene/getty/ulan_person";
 	if (args.length > 2 && args[0].equals("getty") && args[1].equals("ulan") && args[2].equals("organization"))
 	    lucenePath = dataPath + "LD4L/lucene/getty/ulan_organization";
+	if (args.length > 1 && args[0].equals("dbpedia") && args[1].equals("person"))
+	    lucenePath = dataPath + "LD4L/lucene/dbpedia/person";
+	if (args.length > 1 && args[0].equals("dbpedia") && args[1].equals("work"))
+	    lucenePath = dataPath + "LD4L/lucene/dbpedia/work";
 
 	logger.info("endpoint: " + endpoint);
 	logger.info("triplestore: " + tripleStore);
@@ -138,10 +145,92 @@ public class Indexer {
 	    indexGetty(theWriter, "getty:PersonConcept");
 	if (args.length > 0 && args[0].equals("getty") && args[1].equals("ulan") && args[2].equals("organization"))
 	    indexGetty(theWriter, "getty:GroupConcept");
+	if (args.length > 0 && args[0].equals("dbpedia") && args[1].equals("person"))
+	    indexDBpediaPersons(theWriter);
+	if (args.length > 0 && args[0].equals("dbpedia") && args[1].equals("work"))
+	    indexDBpediaWorks(theWriter);
 
 	logger.info("optimizing index...");
 	theWriter.optimize();
 	theWriter.close();
+    }
+    
+    static void indexDBpediaPersons(IndexWriter theWriter) throws CorruptIndexException, IOException {
+	int count = 0;
+	String query =
+		" SELECT DISTINCT ?s ?lab where { "+
+		"  ?s rdf:type <http://dbpedia.org/ontology/Person> . "+
+		"  OPTIONAL { ?s rdfs:label ?labelUS  FILTER (lang(?labelUS) = \"en-US\") } "+
+		"  OPTIONAL { ?s rdfs:label ?labelENG FILTER (langMatches(?labelENG,\"en\")) } "+
+		"  OPTIONAL { ?s rdfs:label ?label    FILTER (lang(?label) = \"\") } "+
+		"  OPTIONAL { ?s rdfs:label ?labelANY FILTER (lang(?labelANY) != \"\") } "+
+		"  OPTIONAL { ?s <http://dbpedia.org/property/name> ?nameUS  FILTER (lang(?nameUS) = \"en-US\") } "+
+		"  OPTIONAL { ?s <http://dbpedia.org/property/name> ?nameENG FILTER (langMatches(?nameENG,\"en\")) } "+
+		"  OPTIONAL { ?s <http://dbpedia.org/property/name> ?name    FILTER (lang(?name) = \"\") } "+
+		"  OPTIONAL { ?s <http://dbpedia.org/property/name> ?nameANY FILTER (lang(?nameANY) != \"\") } "+
+		"  BIND(COALESCE(?labelUS, ?labelENG, ?label, ?labelANY, ?nameUS, ?nameENG, ?name, ?nameANY ) as ?lab) "+
+		"}";
+	ResultSet rs = getResultSet(prefix + query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String address = sol.get("?s").toString();
+	    if (sol.get("?lab") == null) {
+		logger.error("missing label for uri: " + address);
+		continue;
+	    }
+	    String name = sol.get("?lab").asLiteral().getString();
+	    logger.info("address: " + address + "\tname: " + name);
+	    
+	    Document theDocument = new Document();
+	    theDocument.add(new Field("uri", address, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("name", name, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("content", name, Field.Store.NO, Field.Index.ANALYZED));
+	    
+	    theWriter.addDocument(theDocument);
+	    count++;
+	    if (count % 10000 == 0)
+		logger.info("count: " + count);
+	}
+	logger.info("total persons: " + count);
+    }
+    
+    static void indexDBpediaWorks(IndexWriter theWriter) throws CorruptIndexException, IOException {
+	int count = 0;
+	String query =
+		" SELECT DISTINCT ?s ?lab where { "+
+		"  ?s rdf:type <http://dbpedia.org/ontology/Work> . "+
+		"  OPTIONAL { ?s rdfs:label ?labelUS  FILTER (lang(?labelUS) = \"en-US\") } "+
+		"  OPTIONAL { ?s rdfs:label ?labelENG FILTER (langMatches(?labelENG,\"en\")) } "+
+		"  OPTIONAL { ?s rdfs:label ?label    FILTER (lang(?label) = \"\") } "+
+		"  OPTIONAL { ?s rdfs:label ?labelANY FILTER (lang(?labelANY) != \"\") } "+
+		"  OPTIONAL { ?s <http://dbpedia.org/property/name> ?nameUS  FILTER (lang(?nameUS) = \"en-US\") } "+
+		"  OPTIONAL { ?s <http://dbpedia.org/property/name> ?nameENG FILTER (langMatches(?nameENG,\"en\")) } "+
+		"  OPTIONAL { ?s <http://dbpedia.org/property/name> ?name    FILTER (lang(?name) = \"\") } "+
+		"  OPTIONAL { ?s <http://dbpedia.org/property/name> ?nameANY FILTER (lang(?nameANY) != \"\") } "+
+		"  BIND(COALESCE(?labelUS, ?labelENG, ?label, ?labelANY, ?nameUS, ?nameENG, ?name, ?nameANY ) as ?lab) "+
+		"}";
+	ResultSet rs = getResultSet(prefix + query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String address = sol.get("?s").toString();
+	    if (sol.get("?lab") == null) {
+		logger.error("missing label for uri: " + address);
+		continue;
+	    }
+	    String name = sol.get("?lab").asLiteral().getString();
+	    logger.info("address: " + address + "\tname: " + name);
+	    
+	    Document theDocument = new Document();
+	    theDocument.add(new Field("uri", address, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("name", name, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("content", name, Field.Store.NO, Field.Index.ANALYZED));
+	    
+	    theWriter.addDocument(theDocument);
+	    count++;
+	    if (count % 10000 == 0)
+		logger.info("count: " + count);
+	}
+	logger.info("total works: " + count);
     }
     
     static void indexGetty(IndexWriter theWriter, String type) throws CorruptIndexException, IOException {
