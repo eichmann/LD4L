@@ -556,6 +556,37 @@ public class Indexer {
 	logger.info("total names: " + count);
     }
 
+    static void indexVariant(Document theDocument, String uri, String className) throws CorruptIndexException, IOException {
+	String query =
+		"SELECT DISTINCT ?name WHERE { "
+		+ "<" + uri + "> <http://www.geonames.org/ontology#" + className + "> ?name . "
+    		+ "}";
+	ResultSet rs = getResultSet(prefix + query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String name = sol.get("?name").toString();
+	    logger.debug("\tclassName: " + className + "\tname: " + name);
+	    
+	    theDocument.add(new Field("content", name, Field.Store.NO, Field.Index.ANALYZED));
+	}
+    }
+    
+    static void indexVariant2(Document theDocument, String uri, String className) throws CorruptIndexException, IOException {
+	String query =
+		"SELECT DISTINCT ?name WHERE { "
+		+ "<" + uri + "> <http://www.geonames.org/ontology#" + className + "> ?v . "
+		+ "?v <http://www.geonames.org/ontology#name> ?name . "
+		    		+ "}";
+	ResultSet rs = getResultSet(prefix + query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String name = sol.get("?name").toString();
+	    logger.debug("\tclassName: " + className + "\tname: " + name);
+	    
+	    theDocument.add(new Field("content", name, Field.Store.NO, Field.Index.ANALYZED));
+	}
+    }
+
     static public ResultSet getResultSet(String queryString) {
 	if (useSPARQL) {
 	    Query theClassQuery = QueryFactory.create(queryString, Syntax.syntaxARQ);
