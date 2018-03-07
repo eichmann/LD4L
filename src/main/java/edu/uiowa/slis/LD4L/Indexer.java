@@ -400,7 +400,7 @@ public class Indexer {
 	while (rs.hasNext()) {
 	    QuerySolution sol = rs.nextSolution();
 	    String work = sol.get("?work").toString();
-	    String title = sol.get("?title").toString();
+	    String title = sol.get("?title").asLiteral().getString();
 	    logger.debug("work: " + work + "\ttitle: " + title);
 	    
 	    Document theDocument = new Document();
@@ -429,7 +429,7 @@ public class Indexer {
 	    QuerySolution sol = rs.nextSolution();
 //	    String authorityURI = sol.get("?uri").toString();
 	    String personURI = sol.get("?puri").toString();
-	    String name = sol.get("?name").toString();
+	    String name = sol.get("?name").asLiteral().getString();
 	    logger.debug("uri: " + personURI + "\tname: " + name);
 	    
 	    Document theDocument = new Document();
@@ -456,7 +456,7 @@ public class Indexer {
 	while (rs.hasNext()) {
 	    QuerySolution sol = rs.nextSolution();
 	    String URI = sol.get("?uri").toString();
-	    String name = sol.get("?name").toString();
+	    String name = sol.get("?name").asLiteral().getString();
 	    
 	    if (!URI.startsWith("http:"))
 		continue;
@@ -489,7 +489,7 @@ public class Indexer {
 	ResultSet rs = getResultSet(query);
 	while (rs.hasNext()) {
 	    QuerySolution sol = rs.nextSolution();
-	    String value = sol.get("?value").toString();
+	    String value = sol.get("?value").asLiteral().getString();
 	    logger.info("\tpredicate1: " + predicate1 + "\tvalue: " + value);
 	    theDocument.add(new Field("content", value, Field.Store.NO, Field.Index.ANALYZED));
 	}	
@@ -506,7 +506,7 @@ public class Indexer {
 	while (rs.hasNext()) {
 	    QuerySolution sol = rs.nextSolution();
 	    String URI = sol.get("?uri").toString();
-	    String subject = sol.get("?subject").toString();
+	    String subject = sol.get("?subject").asLiteral().getString();
 	    
 	    if (!URI.startsWith("http:"))
 		continue;
@@ -537,7 +537,7 @@ public class Indexer {
 	while (rs.hasNext()) {
 	    QuerySolution sol = rs.nextSolution();
 	    String URI = sol.get("?uri").toString();
-	    String subject = sol.get("?subject").toString();
+	    String subject = sol.get("?subject").asLiteral().getString();
 	    
 	    if (!URI.startsWith("http:"))
 		continue;
@@ -564,7 +564,7 @@ public class Indexer {
 	ResultSet rs = getResultSet(prefix + query);
 	while (rs.hasNext()) {
 	    QuerySolution sol = rs.nextSolution();
-	    String name = sol.get("?name").toString();
+	    String name = sol.get("?name").asLiteral().getString();
 	    logger.debug("\tclassName: " + className + "\tname: " + name);
 	    
 	    theDocument.add(new Field("content", name, Field.Store.NO, Field.Index.ANALYZED));
@@ -580,7 +580,7 @@ public class Indexer {
 	ResultSet rs = getResultSet(prefix + query);
 	while (rs.hasNext()) {
 	    QuerySolution sol = rs.nextSolution();
-	    String name = sol.get("?name").toString();
+	    String name = sol.get("?name").asLiteral().getString();
 	    logger.debug("\tclassName: " + className + "\tname: " + name);
 	    
 	    theDocument.add(new Field("content", name, Field.Store.NO, Field.Index.ANALYZED));
