@@ -88,17 +88,17 @@ public class Indexer {
 	if (args.length > 1 && args[1].equals("person"))
 	    lucenePath = dataPath + "lucene/" + args[0] + "/" + args[1];
 	if (args.length > 1 && args[0].equals("loc") && args[1].equals("names"))
-	    lucenePath = dataPath + "lucene/loc/names";
+	    lucenePath = dataPath + "LD4L/lucene/loc/names";
 	if (args.length > 1 && args[0].equals("loc") && args[1].equals("persons"))
-	    lucenePath = dataPath + "lucene/loc/persons";
+	    lucenePath = dataPath + "LD4L/lucene/loc/persons";
 	if (args.length > 1 && args[0].equals("loc") && args[1].equals("organizations"))
-	    lucenePath = dataPath + "lucene/loc/organizations";
+	    lucenePath = dataPath + "LD4L/lucene/loc/organizations";
 	if (args.length > 1 && args[0].equals("loc") && args[1].equals("titles"))
-	    lucenePath = dataPath + "lucene/loc/titles";
+	    lucenePath = dataPath + "LD4L/lucene/loc/titles";
 	if (args.length > 1 && args[0].equals("loc") && args[1].equals("subjects"))
-	    lucenePath = dataPath + "lucene/loc/subjects";
+	    lucenePath = dataPath + "LD4L/lucene/loc/subjects";
 	if (args.length > 1 && args[0].equals("loc") && args[1].equals("genre"))
-	    lucenePath = dataPath + "lucene/loc/genre";
+	    lucenePath = dataPath + "LD4L/lucene/loc/genre";
 	if (args.length > 1 && args[0].equals("getty") && args[1].equals("aat"))
 	    lucenePath = dataPath + "LD4L/lucene/getty/aat";
 	if (args.length > 1 && args[0].equals("getty") && args[1].equals("tgn"))
@@ -461,7 +461,7 @@ public class Indexer {
 	    if (!URI.startsWith("http:"))
 		continue;
 	    
-	    logger.info("uri: " + URI + "\tname: " + name);
+	    logger.debug("uri: " + URI + "\tname: " + name);
 	    
 	    Document theDocument = new Document();
 	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
@@ -490,7 +490,7 @@ public class Indexer {
 	while (rs.hasNext()) {
 	    QuerySolution sol = rs.nextSolution();
 	    String value = sol.get("?value").asLiteral().getString();
-	    logger.info("\tpredicate1: " + predicate1 + "\tvalue: " + value);
+	    logger.debug("\tpredicate1: " + predicate1 + "\tvalue: " + value);
 	    theDocument.add(new Field("content", value, Field.Store.NO, Field.Index.ANALYZED));
 	}	
     }
