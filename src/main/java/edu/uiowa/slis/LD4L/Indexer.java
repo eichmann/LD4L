@@ -2,6 +2,8 @@ package edu.uiowa.slis.LD4L;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
@@ -41,6 +43,7 @@ public class Indexer {
 	    + " PREFIX schema: <http://schema.org/> "
 	    + " PREFIX mads: <http://www.loc.gov/mads/rdf/v1#> "
 	    + " PREFIX bib: <http://bib.ld4l.org/ontology/> ";
+    private static Pattern datePattern = Pattern.compile("([0-9]{4})-([0-9]{4})");
 
     
     @SuppressWarnings("deprecation")
@@ -111,6 +114,10 @@ public class Indexer {
 	    lucenePath = dataPath + "LD4L/lucene/dbpedia/person";
 	if (args.length > 1 && args[0].equals("dbpedia") && args[1].equals("work"))
 	    lucenePath = dataPath + "LD4L/lucene/dbpedia/work";
+	if (args.length > 1 && args[0].equals("dbpedia") && args[1].equals("organization"))
+	    lucenePath = dataPath + "LD4L/lucene/dbpedia/organization";
+	if (args.length > 1 && args[0].equals("dbpedia") && args[1].equals("place"))
+	    lucenePath = dataPath + "LD4L/lucene/dbpedia/place";
 
 	logger.info("endpoint: " + endpoint);
 	logger.info("triplestore: " + tripleStore);
@@ -146,59 +153,44 @@ public class Indexer {
 	if (args.length > 0 && args[0].equals("getty") && args[1].equals("ulan") && args[2].equals("organization"))
 	    indexGetty(theWriter, "getty:GroupConcept");
 	if (args.length > 0 && args[0].equals("dbpedia") && args[1].equals("person"))
-	    indexDBpediaPersons(theWriter);
+	    indexDBpedia(theWriter, "Person");
 	if (args.length > 0 && args[0].equals("dbpedia") && args[1].equals("work"))
-	    indexDBpediaWorks(theWriter);
+	    indexDBpedia(theWriter, "Work");
+	if (args.length > 0 && args[0].equals("dbpedia") && args[1].equals("organization"))
+	    indexDBpedia(theWriter, "Organization");
+	if (args.length > 0 && args[0].equals("dbpedia") && args[1].equals("place"))
+	    indexDBpedia(theWriter, "Place");
 
 	logger.info("optimizing index...");
 	theWriter.optimize();
 	theWriter.close();
     }
     
-    static void indexDBpediaPersons(IndexWriter theWriter) throws CorruptIndexException, IOException {
-	int count = 0;
-	String query =
-		" SELECT DISTINCT ?s ?lab where { "+
-		"  ?s rdf:type <http://dbpedia.org/ontology/Person> . "+
-		"  OPTIONAL { ?s rdfs:label ?labelUS  FILTER (lang(?labelUS) = \"en-US\") } "+
-		"  OPTIONAL { ?s rdfs:label ?labelENG FILTER (langMatches(?labelENG,\"en\")) } "+
-		"  OPTIONAL { ?s rdfs:label ?label    FILTER (lang(?label) = \"\") } "+
-		"  OPTIONAL { ?s rdfs:label ?labelANY FILTER (lang(?labelANY) != \"\") } "+
-		"  OPTIONAL { ?s <http://dbpedia.org/property/name> ?nameUS  FILTER (lang(?nameUS) = \"en-US\") } "+
-		"  OPTIONAL { ?s <http://dbpedia.org/property/name> ?nameENG FILTER (langMatches(?nameENG,\"en\")) } "+
-		"  OPTIONAL { ?s <http://dbpedia.org/property/name> ?name    FILTER (lang(?name) = \"\") } "+
-		"  OPTIONAL { ?s <http://dbpedia.org/property/name> ?nameANY FILTER (lang(?nameANY) != \"\") } "+
-		"  BIND(COALESCE(?labelUS, ?labelENG, ?label, ?labelANY, ?nameUS, ?nameENG, ?name, ?nameANY ) as ?lab) "+
-		"}";
-	ResultSet rs = getResultSet(prefix + query);
-	while (rs.hasNext()) {
-	    QuerySolution sol = rs.nextSolution();
-	    String address = sol.get("?s").toString();
-	    if (sol.get("?lab") == null) {
-		logger.error("missing label for uri: " + address);
-		continue;
+    static String retokenizeString(String originalQuery, boolean useDateHack) {
+	StringBuffer buffer = new StringBuffer();
+
+	for (String term : originalQuery.split("[, ]+")) {
+	    if (buffer.length() > 0)
+		buffer.append(" ");
+	    if (useDateHack) {
+		Matcher dateMatcher = datePattern.matcher(term);
+		if (dateMatcher.matches()) {
+		    buffer.append(dateMatcher.group(1) + " " + dateMatcher.group(2));
+		} else
+		    buffer.append(term);
+	    } else {
+		buffer.append(term);		
 	    }
-	    String name = sol.get("?lab").asLiteral().getString();
-	    logger.info("address: " + address + "\tname: " + name);
-	    
-	    Document theDocument = new Document();
-	    theDocument.add(new Field("uri", address, Field.Store.YES, Field.Index.NOT_ANALYZED));
-	    theDocument.add(new Field("name", name, Field.Store.YES, Field.Index.NOT_ANALYZED));
-	    theDocument.add(new Field("content", name, Field.Store.NO, Field.Index.ANALYZED));
-	    
-	    theWriter.addDocument(theDocument);
-	    count++;
-	    if (count % 10000 == 0)
-		logger.info("count: " + count);
 	}
-	logger.info("total persons: " + count);
+	
+	return buffer.toString().trim();
     }
-    
-    static void indexDBpediaWorks(IndexWriter theWriter) throws CorruptIndexException, IOException {
+
+    static void indexDBpedia(IndexWriter theWriter, String entity) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
 		" SELECT DISTINCT ?s ?lab where { "+
-		"  ?s rdf:type <http://dbpedia.org/ontology/Work> . "+
+		"  ?s rdf:type <http://dbpedia.org/ontology/" + entity + "> . "+
 		"  OPTIONAL { ?s rdfs:label ?labelUS  FILTER (lang(?labelUS) = \"en-US\") } "+
 		"  OPTIONAL { ?s rdfs:label ?labelENG FILTER (langMatches(?labelENG,\"en\")) } "+
 		"  OPTIONAL { ?s rdfs:label ?label    FILTER (lang(?label) = \"\") } "+
@@ -223,14 +215,14 @@ public class Indexer {
 	    Document theDocument = new Document();
 	    theDocument.add(new Field("uri", address, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("name", name, Field.Store.YES, Field.Index.NOT_ANALYZED));
-	    theDocument.add(new Field("content", name, Field.Store.NO, Field.Index.ANALYZED));
+	    theDocument.add(new Field("content", retokenizeString(name, true), Field.Store.NO, Field.Index.ANALYZED));
 	    
 	    theWriter.addDocument(theDocument);
 	    count++;
 	    if (count % 10000 == 0)
 		logger.info("count: " + count);
 	}
-	logger.info("total works: " + count);
+	logger.info("total " + entity + " count: " + count);
     }
     
     static void indexGetty(IndexWriter theWriter, String type) throws CorruptIndexException, IOException {
@@ -466,7 +458,7 @@ public class Indexer {
 	    Document theDocument = new Document();
 	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("name", name, Field.Store.YES, Field.Index.NOT_ANALYZED));
-	    theDocument.add(new Field("content", name, Field.Store.NO, Field.Index.ANALYZED));
+	    theDocument.add(new Field("content", retokenizeString(name, true), Field.Store.NO, Field.Index.ANALYZED));
 	    annotateLoCName(URI, theDocument, "hasVariant", "variantLabel");
 	    annotateLoCName(URI, theDocument, "fieldOfActivity", "label");
 	    annotateLoCName(URI, theDocument, "fieldOfActivity", "authoritativeLabel");
@@ -491,7 +483,7 @@ public class Indexer {
 	    QuerySolution sol = rs.nextSolution();
 	    String value = sol.get("?value").asLiteral().getString();
 	    logger.debug("\tpredicate1: " + predicate1 + "\tvalue: " + value);
-	    theDocument.add(new Field("content", value, Field.Store.NO, Field.Index.ANALYZED));
+	    theDocument.add(new Field("content", retokenizeString(value, true), Field.Store.NO, Field.Index.ANALYZED));
 	}	
     }
 
@@ -516,7 +508,7 @@ public class Indexer {
 	    Document theDocument = new Document();
 	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("name", subject, Field.Store.YES, Field.Index.NOT_ANALYZED));
-	    theDocument.add(new Field("content", subject, Field.Store.NO, Field.Index.ANALYZED));
+	    theDocument.add(new Field("content", retokenizeString(subject, true), Field.Store.NO, Field.Index.ANALYZED));
 	    theWriter.addDocument(theDocument);
 	    count++;
 	    if (count % 100000 == 0)
@@ -547,7 +539,7 @@ public class Indexer {
 	    Document theDocument = new Document();
 	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("name", subject, Field.Store.YES, Field.Index.NOT_ANALYZED));
-	    theDocument.add(new Field("content", subject, Field.Store.NO, Field.Index.ANALYZED));
+	    theDocument.add(new Field("content", retokenizeString(subject, true), Field.Store.NO, Field.Index.ANALYZED));
 	    theWriter.addDocument(theDocument);
 	    count++;
 	    if (count % 100000 == 0)
