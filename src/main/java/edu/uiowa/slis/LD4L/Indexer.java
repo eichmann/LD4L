@@ -106,6 +106,8 @@ public class Indexer {
 	    lucenePath = dataPath + "LD4L/lucene/getty/aat";
 	if (args.length > 1 && args[0].equals("getty") && args[1].equals("tgn"))
 	    lucenePath = dataPath + "LD4L/lucene/getty/tgn";
+	if (args.length == 2 && args[0].equals("getty") && args[1].equals("ulan"))
+	    lucenePath = dataPath + "LD4L/lucene/getty/ulan";
 	if (args.length > 2 && args[0].equals("getty") && args[1].equals("ulan") && args[2].equals("person"))
 	    lucenePath = dataPath + "LD4L/lucene/getty/ulan_person";
 	if (args.length > 2 && args[0].equals("getty") && args[1].equals("ulan") && args[2].equals("organization"))
@@ -148,9 +150,13 @@ public class Indexer {
 	    indexGetty(theWriter, "getty:Concept");
 	if (args.length > 0 && args[0].equals("getty") && args[1].equals("tgn"))
 	    indexGetty(theWriter, "getty:PhysPlaceConcept");
-	if (args.length > 0 && args[0].equals("getty") && args[1].equals("ulan") && args[2].equals("person"))
+	if (args.length == 2 && args[0].equals("getty") && args[1].equals("ulan")) {
 	    indexGetty(theWriter, "getty:PersonConcept");
-	if (args.length > 0 && args[0].equals("getty") && args[1].equals("ulan") && args[2].equals("organization"))
+	    indexGetty(theWriter, "getty:GroupConcept");
+	}
+	if (args.length == 3 && args[0].equals("getty") && args[1].equals("ulan") && args[2].equals("person"))
+	    indexGetty(theWriter, "getty:PersonConcept");
+	if (args.length == 3 && args[0].equals("getty") && args[1].equals("ulan") && args[2].equals("organization"))
 	    indexGetty(theWriter, "getty:GroupConcept");
 	if (args.length > 0 && args[0].equals("dbpedia") && args[1].equals("person"))
 	    indexDBpedia(theWriter, "Person");
