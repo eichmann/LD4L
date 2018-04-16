@@ -27,7 +27,7 @@ import org.apache.lucene.store.LockObtainFailedException;
 public class Indexer {
     protected static Logger logger = Logger.getLogger(Indexer.class);
     
-    static boolean useSPARQL = false;
+    static boolean useSPARQL = true;
     static Dataset dataset = null;
     static String tripleStore = null;
     static String endpoint = null;
@@ -68,6 +68,9 @@ public class Indexer {
 	} else if (args.length > 1 && args[0].equals("getty") && args[1].equals("aat")) {
 	    tripleStore = dataPath + "Getty/AAT";
 	    endpoint = "http://services.ld4l.org/fuseki/getty_aat/sparql";
+	} else if (args.length > 1 && args[0].equals("getty") && args[1].equals("aat_facets")) {
+	    tripleStore = dataPath + "Getty/AAT";
+	    endpoint = "http://services.ld4l.org/fuseki/getty_aat/sparql";
 	} else if (args.length > 1 && args[0].equals("getty") && args[1].equals("tgn")) {
 	    tripleStore = dataPath + "Getty/TGN";
 	    endpoint = "http://services.ld4l.org/fuseki/getty_tgn/sparql";
@@ -104,6 +107,8 @@ public class Indexer {
 	    lucenePath = dataPath + "LD4L/lucene/loc/genre";
 	if (args.length > 1 && args[0].equals("getty") && args[1].equals("aat"))
 	    lucenePath = dataPath + "LD4L/lucene/getty/aat";
+	if (args.length > 1 && args[0].equals("getty") && args[1].equals("aat_facets"))
+	    lucenePath = dataPath + "LD4L/lucene/getty/aat_facets";
 	if (args.length > 1 && args[0].equals("getty") && args[1].equals("tgn"))
 	    lucenePath = dataPath + "LD4L/lucene/getty/tgn";
 	if (args.length == 2 && args[0].equals("getty") && args[1].equals("ulan"))
@@ -148,6 +153,8 @@ public class Indexer {
 	    indexLoCGenre(theWriter);
 	if (args.length > 0 && args[0].equals("getty") && args[1].equals("aat"))
 	    indexGetty(theWriter, "getty:Concept");
+	if (args.length > 0 && args[0].equals("getty") && args[1].equals("aat_facets"))
+	    indexGettyAAT(theWriter, "getty:Concept");
 	if (args.length > 0 && args[0].equals("getty") && args[1].equals("tgn"))
 	    indexGetty(theWriter, "getty:PhysPlaceConcept");
 	if (args.length == 2 && args[0].equals("getty") && args[1].equals("ulan")) {
@@ -286,6 +293,79 @@ public class Indexer {
 	    count++;
 	    if (count % 100000 == 0)
 		logger.info("count: " + count);
+	}
+	logger.info("total concepts: " + count);
+    }
+    
+    static void indexGettyAAT(IndexWriter theWriter, String type) throws CorruptIndexException, IOException {
+	int count = 0;
+	String facetQuery = 
+			"select ?s ?sl ?m ?ml where { "
+			+ "  ?s <http://www.w3.org/2004/02/skos/core#member> ?m . "
+			+ "  ?s <http://www.w3.org/2004/02/skos/core#prefLabel> ?sl . "
+			+ "  ?m <http://www.w3.org/2004/02/skos/core#prefLabel> ?ml . "
+			+ "  ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://vocab.getty.edu/ontology#Facet> . "
+			+ "  FILTER (lang(?sl) = 'en' && lang(?ml) = 'en') "
+			+ "  FILTER NOT EXISTS { ?s <http://vocab.getty.edu/ontology#broader> ?o2 } "
+			+ "} ";
+	ResultSet rs = getResultSet(prefix + facetQuery);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String facetURI = sol.get("?s").toString();
+	    String facetLabel = sol.get("?sl").asLiteral().getString();
+	    String rootURI = sol.get("?m").toString();
+	    String rootLabel = sol.get("?ml").asLiteral().getString();
+	    String facetID = "AAT" + facetURI.substring(facetURI.lastIndexOf('/')+1);
+	    String rootID = "AAT" + rootURI.substring(rootURI.lastIndexOf('/')+1);
+	    
+	    logger.info("\nfacetURI: " + facetURI + "\tfacetLabel: " + facetLabel + "\trootURI: " + rootURI + "\trootLabel: " + rootLabel);
+	    
+	    String transQuery = 
+		    	"select ?s ?sl where { "
+		    	+ " ?s <http://vocab.getty.edu/ontology#broaderPreferred>* <" + rootURI + "> . "
+		    	+ " ?s <http://www.w3.org/2004/02/skos/core#prefLabel> ?sl . "
+		    	+ " FILTER (lang(?sl) = 'en') "
+		    	+ " } ";
+	    ResultSet trs = getResultSet(prefix + transQuery);
+	    while (trs.hasNext()) {
+		QuerySolution tsol = trs.nextSolution();
+		String transURI = tsol.get("?s").toString();
+		String transLabel = tsol.get("?sl").asLiteral().getString();
+
+		logger.info("\ttransURI: " + transURI + "\ttransLabel: " + transLabel);
+		Document theDocument = new Document();
+		theDocument.add(new Field("uri", transURI, Field.Store.YES, Field.Index.NOT_ANALYZED));
+		theDocument.add(new Field("title", transLabel, Field.Store.YES, Field.Index.NOT_ANALYZED));
+		theDocument.add(new Field("content", transLabel, Field.Store.NO, Field.Index.ANALYZED));
+
+		logger.info("\t\tfacetID: " + facetID);
+		logger.info("\t\trootID: " + rootID);
+		theDocument.add(new Field("content", facetID, Field.Store.NO, Field.Index.ANALYZED));
+		theDocument.add(new Field("content", rootID, Field.Store.NO, Field.Index.ANALYZED));
+
+		String query1 = "SELECT DISTINCT ?preflabel WHERE { " + "<" + transURI + "> skos:prefLabel ?preflabel . " + "}";
+		ResultSet prs = getResultSet(prefix + query1);
+		while (prs.hasNext()) {
+		    QuerySolution psol = prs.nextSolution();
+		    String preflabel = psol.get("?preflabel").asLiteral().getString();
+		    logger.info("\t\tpref label: " + preflabel);
+		    theDocument.add(new Field("content", preflabel, Field.Store.NO, Field.Index.ANALYZED));
+		}
+
+		String query2 = "SELECT DISTINCT ?altlabel WHERE { " + "<" + transURI + "> skos:altLabel ?altlabel . " + "}";
+		ResultSet ars = getResultSet(prefix + query2);
+		while (ars.hasNext()) {
+		    QuerySolution asol = ars.nextSolution();
+		    String altlabel = asol.get("?altlabel").asLiteral().getString();
+		    logger.info("\t\talt label: " + altlabel);
+		    theDocument.add(new Field("content", altlabel, Field.Store.NO, Field.Index.ANALYZED));
+		}
+
+		theWriter.addDocument(theDocument);
+		count++;
+		if (count % 100000 == 0)
+		    logger.info("count: " + count);
+	    }
 	}
 	logger.info("total concepts: " + count);
     }
