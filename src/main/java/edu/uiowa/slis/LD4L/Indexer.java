@@ -27,7 +27,7 @@ import org.apache.lucene.store.LockObtainFailedException;
 public class Indexer {
     protected static Logger logger = Logger.getLogger(Indexer.class);
     
-    static boolean useSPARQL = true;
+    static boolean useSPARQL = false;
     static Dataset dataset = null;
     static String tripleStore = null;
     static String endpoint = null;
@@ -39,6 +39,8 @@ public class Indexer {
 	    + " PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
 	    + " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
 	    + " PREFIX skos: <http://www.w3.org/2004/02/skos/core#> "
+	    + " PREFIX owl: <http://www.w3.org/2002/07/owl#> "
+	    + " PREFIX umls: <http://bioportal.bioontology.org/ontologies/umls/> "
 	    + " PREFIX getty: <http://vocab.getty.edu/ontology#> "
 	    + " PREFIX schema: <http://schema.org/> "
 	    + " PREFIX mads: <http://www.loc.gov/mads/rdf/v1#> "
@@ -80,6 +82,9 @@ public class Indexer {
 	} else if (args.length > 1 && args[0].equals("dbpedia")) {
 	    tripleStore = dataPath + "dbpedia_2016-14";
 	    endpoint = "http://services.ld4l.org/fuseki/dbpedia/sparql";
+	} else if (args.length == 1 && args[0].equals("mesh")) {
+	    tripleStore = dataPath + "MeSH";
+	    endpoint = "http://services.ld4l.org/fuseki/mesh/sparql";
 	} else {
 	    tripleStore = dataPath + args[0];
 	    endpoint = "http://services.ld4l.org/fuseki/" + args[0] + "/sparql";
@@ -125,6 +130,8 @@ public class Indexer {
 	    lucenePath = dataPath + "LD4L/lucene/dbpedia/organization";
 	if (args.length > 1 && args[0].equals("dbpedia") && args[1].equals("place"))
 	    lucenePath = dataPath + "LD4L/lucene/dbpedia/place";
+	if (args.length == 1 && args[0].equals("mesh"))
+	    lucenePath = dataPath + "LD4L/lucene/mesh";
 
 	logger.info("endpoint: " + endpoint);
 	logger.info("triplestore: " + tripleStore);
@@ -173,6 +180,8 @@ public class Indexer {
 	    indexDBpedia(theWriter, "Organization");
 	if (args.length > 0 && args[0].equals("dbpedia") && args[1].equals("place"))
 	    indexDBpedia(theWriter, "Place");
+	if (args.length > 0 && args[0].equals("mesh"))
+	    indexMeSH(theWriter);
 
 	logger.info("optimizing index...");
 	theWriter.optimize();
@@ -236,6 +245,65 @@ public class Indexer {
 		logger.info("count: " + count);
 	}
 	logger.info("total " + entity + " count: " + count);
+    }
+    
+    static void indexMeSH(IndexWriter theWriter) throws CorruptIndexException, IOException {
+	int count = 0;
+	String query =
+		" SELECT DISTINCT ?s ?lab ?def where { "+
+		"  ?s rdf:type owl:Class . "+
+		"  ?s skos:prefLabel ?lab . "+
+		"  OPTIONAL { ?s skos:definition ?def } "+
+		"}";
+	ResultSet rs = getResultSet(prefix + query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String uri = sol.get("?s").toString();
+	    if (sol.get("?lab") == null) {
+		logger.error("missing label for uri: " + uri);
+		continue;
+	    }
+	    String label = sol.get("?lab").asLiteral().getString();
+	    String definition = sol.get("?def") == null ? null : sol.get("?def").asLiteral().getString();
+	    logger.info("uri: " + uri + "\tlabel: " + label + "\tdefinition: " + definition);
+	    
+	    Document theDocument = new Document();
+	    theDocument.add(new Field("uri", uri, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("name", label, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("content", label, Field.Store.NO, Field.Index.ANALYZED));
+	    if (definition != null)
+		theDocument.add(new Field("content", definition, Field.Store.NO, Field.Index.ANALYZED));
+
+	    String query1 = 
+		  "SELECT DISTINCT ?cui WHERE { "
+			  + "<" + uri + "> umls:cui ?cui . "
+		+ "}";
+	    ResultSet ars = getResultSet(prefix + query1);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String cui = asol.get("?cui").asLiteral().getString();
+		logger.info("\tcui: " + cui);
+		theDocument.add(new Field("content", cui, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    String query2 = 
+		  "SELECT DISTINCT ?altlabel WHERE { "
+			  + "<" + uri + "> skos:altLabel ?altlabel . "
+		+ "}";
+	    ars = getResultSet(prefix + query2);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String altlabel = asol.get("?altlabel").asLiteral().getString();
+		logger.info("\talt label: " + altlabel);
+		theDocument.add(new Field("content", altlabel, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    theWriter.addDocument(theDocument);
+	    count++;
+	    if (count % 10000 == 0)
+		logger.info("count: " + count);
+	}
+	logger.info("total count: " + count);
     }
     
     static void indexGetty(IndexWriter theWriter, String type) throws CorruptIndexException, IOException {
