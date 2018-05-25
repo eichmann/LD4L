@@ -29,6 +29,7 @@
      <#nalt>
      <#agrovoc>
      <#wikidata>
+     <#mesh>
    ) .
 
 ########################
@@ -158,6 +159,12 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     fuseki:dataset           <#wikidataTDB> ;
     .
 
+<#mesh>  rdf:type fuseki:Service ;
+    fuseki:name              "mesh" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#meshTDB> ;
+    .
+
 <#cornellTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LD4L/triplestores/cornell" ;
@@ -252,7 +259,13 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/Agrovoc" ;
     .
+
 <#wikidataTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/Wikidata" ;
+    .
+
+ <#meshTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/MeSH" ;
     .
