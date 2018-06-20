@@ -694,6 +694,19 @@ public class Indexer {
 	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("name", subject, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("content", retokenizeString(subject, true), Field.Store.NO, Field.Index.ANALYZED));
+
+	    String query1 = 
+		  "SELECT DISTINCT ?altlabel WHERE { "
+			  + "<" + URI + "> skos:altLabel ?altlabel . "
+		+ "}";
+	    ResultSet prs = getResultSet(prefix + query1);
+	    while (prs.hasNext()) {
+		QuerySolution psol = prs.nextSolution();
+		String altlabel = psol.get("?altlabel").asLiteral().getString();
+		logger.info("\talt label: " + altlabel);
+		theDocument.add(new Field("content", altlabel, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
 	    theWriter.addDocument(theDocument);
 	    count++;
 	    if (count % 100000 == 0)
