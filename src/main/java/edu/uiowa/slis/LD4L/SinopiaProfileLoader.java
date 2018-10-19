@@ -31,6 +31,7 @@ public class SinopiaProfileLoader {
     static Connection conn = null;
     static String thePath = "/Users/eichmann/downloads/sinopia_sample_profiles-master/verso";
     static Hashtable<String, Profile> profileHash = new Hashtable<String, Profile>();
+    static Hashtable<String, ResourceTemplate> resourceHash = new Hashtable<String, ResourceTemplate>();
 
     public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException {
 	PropertyConfigurator.configure(args[0]);
@@ -58,7 +59,7 @@ public class SinopiaProfileLoader {
 	}
 	
 	processProfiles();
-	generateQuery("profile:bf2:Monograph", "<http://uiowa.edu/eichmann>");
+	generateQuery("profile:bf2:Monograph:Work", "<http://share-vde.org/sharevde/rdfBibframe2/Work/18724624>");
     }
 
     static void processFile(File theFile) throws IOException, SQLException {
@@ -94,7 +95,11 @@ public class SinopiaProfileLoader {
 	    String id = rs.getString(1);
 	    Date modDate = rs.getDate(2);
 	    JSONObject profile = new JSONObject(new JSONTokener(new StringReader(rs.getString(3))));
-	    Profile theProfile = new Profile(id, modDate);
+	    String title = profile.getString("title").trim();
+	    String description = profile.getString("description").trim();
+	    String contact = profile.optString("contact");
+	    String remark = profile.optString("remark");
+	    Profile theProfile = new Profile(id, title, description, contact, remark, modDate);
 	    profileHash.put(id, theProfile);
 	    
 	    logger.info("parsing profile: " + id);
@@ -106,21 +111,24 @@ public class SinopiaProfileLoader {
 		String resourceID = resourceTemplate.getString("id");
 		String resourceURI = resourceTemplate.getString("resourceURI");
 		String resourceLabel = resourceTemplate.getString("resourceLabel");
+		String resourceRemark = resourceTemplate.optString("remark");
 		
 		logger.info("\tresourceID: " + resourceID);
 		logger.info("\t\tresourceURI: " + resourceURI);
 		logger.info("\t\tresourceLabel: " + resourceLabel);
+		logger.info("\t\tresourceRemark: " + resourceRemark);
 		
-		ResourceTemplate theResourceTemplate = new ResourceTemplate(resourceID, resourceURI, resourceLabel);
+		ResourceTemplate theResourceTemplate = new ResourceTemplate(resourceID, resourceURI, resourceLabel, resourceRemark);
 		theProfile.addResourceTemplate(theResourceTemplate);
+		resourceHash.put(resourceID, theResourceTemplate);
 		
 		JSONArray propertyTemplates = resourceTemplate.getJSONArray("propertyTemplates");
 		for (int j = 0; j < propertyTemplates.length(); j++) {
 		    JSONObject propertyTemplate = propertyTemplates.getJSONObject(j);
-		    String remark = propertyTemplate.optString("remark");
+		    String propertyRemark = propertyTemplate.optString("remark");
 		    String propertyLabel = propertyTemplate.getString("propertyLabel");
-		    boolean repeatable = propertyTemplate.getBoolean("repeatable");
-		    boolean mandatory = propertyTemplate.optBoolean("mendatory");
+		    boolean repeatable = propertyTemplate.optBoolean("repeatable", true);
+		    boolean mandatory = propertyTemplate.optBoolean("mendatory", false);
 		    String type = propertyTemplate.getString("type");
 		    String propertyURI = propertyTemplate.getString("propertyURI");
 
@@ -129,25 +137,31 @@ public class SinopiaProfileLoader {
 		    logger.info("\t\t\ttype: " + type);
 		    logger.info("\t\t\trepeatable: " + repeatable);
 		    logger.info("\t\t\tmandatory: " + mandatory);
-		    logger.info("\t\t\tremark: " + remark); 
+		    logger.info("\t\t\tpropertyRemark: " + propertyRemark); 
 		    
 		    PropertyTemplate thePropertyTemplate = new PropertyTemplate(propertyLabel, remark, propertyURI, type, repeatable, mandatory);
 		    theResourceTemplate.addPropertyTemplate(thePropertyTemplate);
 		    
 		    JSONObject valueConstraint = propertyTemplate.getJSONObject("valueConstraint");
 		    logger.trace(valueConstraint.toString(1));
-		    boolean valueEditable = valueConstraint.optBoolean("editable");
-		    boolean valueRepeatable = valueConstraint.optBoolean("repeatable");
+		    boolean valueEditable = valueConstraint.optBoolean("editable", false);
+		    String language = valueConstraint.optString("language");
+		    String languageURI = valueConstraint.optString("languageURI");
+		    String languageLabel = valueConstraint.optString("languageLabel");
+		    String valueConstraintRemark = valueConstraint.optString("remark");
 		    String defaultURI = valueConstraint.optString("defaultURI");
 		    String defaultLiteral = valueConstraint.optString("defaultLiteral");
 		    String dataTypeURI = valueConstraint.optJSONObject("valueDataType") == null ? null : valueConstraint.getJSONObject("valueDataType").optString("dataTypeURI");
 		    logger.info("\t\t\tvalueEditable: " + valueEditable);
-		    logger.info("\t\t\tvalueRepeatable: " + valueRepeatable);
+		    logger.info("\t\t\tlanguage: " + language);
+		    logger.info("\t\t\tlanguageURI: " + languageURI);
+		    logger.info("\t\t\tlanguageLabel: " + languageLabel);
+		    logger.info("\t\t\tvalueConstraintRemark: " + valueConstraintRemark);
 		    logger.info("\t\t\tdefaultURI: " + defaultURI);
 		    logger.info("\t\t\tdefaultLiteral: " + defaultLiteral);
 		    logger.info("\t\t\tdataTypeURI: " + dataTypeURI);
 		    
-		    ValueConstraint theValueConstraint = new ValueConstraint(valueEditable, valueRepeatable, defaultURI, defaultLiteral, dataTypeURI);
+		    ValueConstraint theValueConstraint = new ValueConstraint(valueEditable, language, languageURI, languageLabel, valueConstraintRemark, defaultURI, defaultLiteral, dataTypeURI);
 		    thePropertyTemplate.setValueConstraint(theValueConstraint);
 		    
 		    JSONArray valueTemplateRefs = valueConstraint.getJSONArray("valueTemplateRefs");
@@ -167,14 +181,52 @@ public class SinopiaProfileLoader {
 	}
     }
     
+    /*
+     * 	CONSTRUCT {
+		<http://share-vde.org/sharevde/rdfBibframe2/Work/18724624> ?p ?o .
+  		?x ?y ?z
+	} FROM <http://share-vde.org> WHERE {
+		<http://share-vde.org/sharevde/rdfBibframe2/Work/18724624> ?p ?o .
+  optional {
+		<http://share-vde.org/sharevde/rdfBibframe2/Work/18724624> <http://id.loc.gov/ontologies/bibframe/title> ?x .
+    ?x ?y ?z
+  }
+	}
+
+
+     */
     static void generateQuery(String id, String subjectURI) {
-	Profile profile = profileHash.get(id);
+	ResourceTemplate resource = resourceHash.get(id);
+	logger.info("selecting reqource: " + resource.getId());
+	for (PropertyTemplate property : resource.getPropertyTemplates()) {
+	    logger.info("\tproperty: " + property.getLabel());
+	    logger.info("\t\ttype : " + property.getType());
+	    logger.info("\t\trepeatable : " + property.isRepeatable());
+	    logger.info("\t\tURI : " + property.getURI());
+	    for (String ref : property.getValueConstraint().getValueTemplateRefs()) {
+		logger.info("\t\tvalueTemplaceRef : " + ref);
+	    }
+	}
 	StringBuffer buffer = new StringBuffer();
-	buffer.append("select\n");
-	buffer.append("\tvars\n");
-	buffer.append("where {\n");
-	buffer.append("\t" + subjectURI + " rdfs:type <http://id.loc.gov/ontologies/bibframe/Work> .\n");
-	buffer.append("}\n");
+	if (resource.hasRepeatableProperty()) {
+		buffer.append("{\n");
+	}
+	buffer.append("\tCONSTRUCT {\n");
+	buffer.append("\t\t" + subjectURI + " ?p ?o .\n");
+	buffer.append("\t} FROM <http://share-vde.org> WHERE {\n");
+	buffer.append("\t\t" + subjectURI + " ?p ?o .\n");
+	buffer.append("\t}\n");
+	if (resource.hasRepeatableProperty()) {
+		for (PropertyTemplate property : resource.getPropertyTemplates()) {
+		    buffer.append("} UNION {\n");
+		    buffer.append("\tselect\n");
+		    buffer.append("\t\t" + subjectURI + " <" + property.getURI() + "> ?x\n");
+		    buffer.append("\twhere {\n");
+		    buffer.append("\t\t" + subjectURI + " <" + property.getURI() + "> ?x .\n");
+		    buffer.append("\t}\n");
+		}
+		buffer.append("}\n");
+	}
 	
 	logger.info("query:\n" + buffer);
     }
