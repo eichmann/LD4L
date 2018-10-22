@@ -16,6 +16,10 @@ public class ResourceTemplate {
 	this.remark = remark;
     }
     
+    public String toString() {
+	return id;
+    }
+    
     public void addPropertyTemplate(PropertyTemplate template) {
 	propertyTemplates.addElement(template);
     }

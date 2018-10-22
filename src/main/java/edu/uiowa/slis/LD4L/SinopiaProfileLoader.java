@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.Properties;
+import java.util.Vector;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -197,18 +198,18 @@ public class SinopiaProfileLoader {
 	StringBuffer buffer = new StringBuffer();
 	buffer.append("CONSTRUCT\n\t{\n");
 	buffer.append("\t\t" + subjectURI + " ?p ?o .\n");
-	generateTriplePatterns(buffer, resource, var+"", "");
+	generateTriplePatterns(buffer, resource, var+"", new Vector<ResourceTemplate>());
 	buffer.append("\t}\nFROM <http://share-vde.org>\nFROM <http://share-vde.org/sharevde/rdfBibframe2/Agent/STANFORD>\nWHERE {\n");
 	buffer.append("\t\t{ " + subjectURI + " ?p ?o . }\n");
-	generateWhereClauses(subjectURI, buffer, resource, var+"", "");
+	generateWhereClauses(subjectURI, buffer, resource, var+"", new Vector<ResourceTemplate>());
 	buffer.append("}\n");
 	
 	logger.info("query:\n" + buffer);
     }
     
-    static void generateTriplePatterns(StringBuffer buffer, ResourceTemplate parent, String prefix, String callPath) {
+    static void generateTriplePatterns(StringBuffer buffer, ResourceTemplate parent, String prefix, Vector<ResourceTemplate> callStack) {
 	int var = 1;
-	if (parent == null || callPath.indexOf(parent.getId()) >= 0)
+	if (parent == null || presentInCallStack(callStack, parent))
 	    return;
 	logger.info("template: " + parent.getId());
 	for (PropertyTemplate property : parent.getPropertyTemplates()) {
@@ -222,7 +223,9 @@ public class SinopiaProfileLoader {
 		    buffer.append("\t\t?s" + prefix + "_" +  var + " ?p" + prefix + "_" + var + " ?o" + prefix + "_" + var + " . # " + parent.getId() + " : " + property.getLabel() + "\n");
 		    for (String name : property.getValueConstraint().getValueTemplateRefs()) {
 			ResourceTemplate child = resourceHash.get(name);
-			generateTriplePatterns(buffer, child, prefix+"_"+var, callPath+" | "+parent.getId());
+			callStack.add(parent);
+			generateTriplePatterns(buffer, child, prefix+"_"+var, callStack);
+			callStack.removeElement(parent);
 		    }
 	    	    break;
 		default :
@@ -232,10 +235,18 @@ public class SinopiaProfileLoader {
 	    var++;
 	}
     }
+    
+    static boolean presentInCallStack(Vector<ResourceTemplate> callStack, ResourceTemplate candidate) {
+	for (ResourceTemplate current : callStack) {
+	    if (current.getId().equals(candidate.getId()))
+		return true;
+	}
+	return false;
+    }
 
-    static void generateWhereClauses(String subjectURI, StringBuffer buffer, ResourceTemplate parent, String prefix, String callPath) {
+    static void generateWhereClauses(String subjectURI, StringBuffer buffer, ResourceTemplate parent, String prefix, Vector<ResourceTemplate> callStack) {
 	int var = 1;
-	if (parent == null || callPath.indexOf(parent.getId()) >= 0)
+	if (parent == null || presentInCallStack(callStack, parent))
 	    return;
 	logger.info("template: " + parent.getId());
 	for (PropertyTemplate property : parent.getPropertyTemplates()) {
@@ -251,12 +262,22 @@ public class SinopiaProfileLoader {
 	    	case "resource" :
 //		    buffer.append("\t\t?s" + prefix + "_" +  var + " ?p" + prefix + "_" + var + " ?o" + prefix + "_" + var + " . # " + parent.getId() + " : " + property.getLabel() + "\n");
 		    buffer.append("\tUNION { # " + property.getType() + "\n");
-//		    buffer.append("\t\t" + subjectURI + " <" + property.getURI() + "> ?s" + prefix + "_" + var + " . # " + callPath + "\n");
-		    buffer.append("\t\t?s" + prefix + "_" + var + " ?p" + prefix + "_" + var + " ?o" + prefix + "_" + var + " . # " + callPath + " : " + property.getURI() + "\n");
+		    buffer.append("\t\t# prefix: " + prefix + " var: " + var + "  --  " + callStack + " : " + parent + " : " + property.getURI() + "\n");
+		    char var2 = 'a';
+		    boolean first = true;
+		    for (ResourceTemplate ancestor : callStack) {
+			buffer.append("\t\t" + (first ? subjectURI : "?s"+prefix+"_"+var+"_"+var2) + " <" + ancestor.getURI() + "> ?s" + prefix+"_"+var + "_" + (first ? var2 : ++var2) + ". \n");
+			first = false;
+		    }
+		    buffer.append("\t\t" + (first ? subjectURI : "?s"+prefix+"_"+var+"_"+var2) + " <" + parent.getURI() + "> ?s" + prefix+"_"+var + "_" + (first ? var2 : ++var2) + ". \n");
+		    buffer.append("\t\t" + (first ? subjectURI : "?s"+prefix+"_"+var+"_"+var2) + " <" + property.getURI() + "> ?s" + prefix+"_"+var + ". \n");
+		    buffer.append("\t\t?s" + prefix + "_" + var + " ?p" + prefix + "_" + var + " ?o" + prefix + "_" + var + " .\n");
 		    buffer.append("\t}\n");
 		    for (String name : property.getValueConstraint().getValueTemplateRefs()) {
 			ResourceTemplate child = resourceHash.get(name);
-			generateWhereClauses(subjectURI, buffer, child, prefix+"_"+var, callPath+" | "+parent.getId());
+			callStack.add(parent);
+			generateWhereClauses(subjectURI, buffer, child, prefix+"_"+var, callStack);
+			callStack.removeElement(parent);
 		    }
 	    	    break;
 		default :
