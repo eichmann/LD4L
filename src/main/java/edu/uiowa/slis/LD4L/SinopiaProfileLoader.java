@@ -181,21 +181,8 @@ public class SinopiaProfileLoader {
 	}
     }
     
-    /*
-     * 	CONSTRUCT {
-		<http://share-vde.org/sharevde/rdfBibframe2/Work/18724624> ?p ?o .
-  		?x ?y ?z
-	} FROM <http://share-vde.org> WHERE {
-		<http://share-vde.org/sharevde/rdfBibframe2/Work/18724624> ?p ?o .
-  optional {
-		<http://share-vde.org/sharevde/rdfBibframe2/Work/18724624> <http://id.loc.gov/ontologies/bibframe/title> ?x .
-    ?x ?y ?z
-  }
-	}
-
-
-     */
     static void generateQuery(String id, String subjectURI) {
+	int var = 1;
 	ResourceTemplate resource = resourceHash.get(id);
 	logger.info("selecting reqource: " + resource.getId());
 	for (PropertyTemplate property : resource.getPropertyTemplates()) {
@@ -208,27 +195,76 @@ public class SinopiaProfileLoader {
 	    }
 	}
 	StringBuffer buffer = new StringBuffer();
-	if (resource.hasRepeatableProperty()) {
-		buffer.append("{\n");
-	}
-	buffer.append("\tCONSTRUCT {\n");
+	buffer.append("CONSTRUCT\n\t{\n");
 	buffer.append("\t\t" + subjectURI + " ?p ?o .\n");
-	buffer.append("\t} FROM <http://share-vde.org> WHERE {\n");
-	buffer.append("\t\t" + subjectURI + " ?p ?o .\n");
-	buffer.append("\t}\n");
-	if (resource.hasRepeatableProperty()) {
-		for (PropertyTemplate property : resource.getPropertyTemplates()) {
-		    buffer.append("} UNION {\n");
-		    buffer.append("\tselect\n");
-		    buffer.append("\t\t" + subjectURI + " <" + property.getURI() + "> ?x\n");
-		    buffer.append("\twhere {\n");
-		    buffer.append("\t\t" + subjectURI + " <" + property.getURI() + "> ?x .\n");
-		    buffer.append("\t}\n");
-		}
-		buffer.append("}\n");
-	}
+	generateTriplePatterns(buffer, resource, var+"", "");
+	buffer.append("\t}\nFROM <http://share-vde.org>\nFROM <http://share-vde.org/sharevde/rdfBibframe2/Agent/STANFORD>\nWHERE {\n");
+	buffer.append("\t\t{ " + subjectURI + " ?p ?o . }\n");
+	generateWhereClauses(subjectURI, buffer, resource, var+"", "");
+	buffer.append("}\n");
 	
 	logger.info("query:\n" + buffer);
+    }
+    
+    static void generateTriplePatterns(StringBuffer buffer, ResourceTemplate parent, String prefix, String callPath) {
+	int var = 1;
+	if (parent == null || callPath.indexOf(parent.getId()) >= 0)
+	    return;
+	logger.info("template: " + parent.getId());
+	for (PropertyTemplate property : parent.getPropertyTemplates()) {
+	    switch(property.getType()) {
+	    	case "literal" :
+	    	case "lookup" :
+//		    buffer.append("\t\t?s" + prefix + "_" + var + " ?p" + prefix + "_" + var + " ?o" + prefix + "_" + var + " .\n");
+	    	    break;
+	    	case "resource" :
+	    	case "target" :
+		    buffer.append("\t\t?s" + prefix + "_" +  var + " ?p" + prefix + "_" + var + " ?o" + prefix + "_" + var + " . # " + parent.getId() + " : " + property.getLabel() + "\n");
+		    for (String name : property.getValueConstraint().getValueTemplateRefs()) {
+			ResourceTemplate child = resourceHash.get(name);
+			generateTriplePatterns(buffer, child, prefix+"_"+var, callPath+" | "+parent.getId());
+		    }
+	    	    break;
+		default :
+		    logger.error("*** unrecognized property type: " + property.getType());
+		    break;
+	    }
+	    var++;
+	}
+    }
+
+    static void generateWhereClauses(String subjectURI, StringBuffer buffer, ResourceTemplate parent, String prefix, String callPath) {
+	int var = 1;
+	if (parent == null || callPath.indexOf(parent.getId()) >= 0)
+	    return;
+	logger.info("template: " + parent.getId());
+	for (PropertyTemplate property : parent.getPropertyTemplates()) {
+	    switch(property.getType()) {
+	    	case "literal" :
+	    	case "lookup" :
+	    	case "target" :
+//		    buffer.append("\tUNION { # " + property.getType() + "\n");
+//		    buffer.append("\t\t" + subjectURI + " <" + property.getURI() + "> ?s" + prefix + "_" + var + " .\n");
+//		    buffer.append("\t\t?s" + prefix + "_" + var + " ?p" + prefix + "_" + var + " ?o" + prefix + "_" + var + " .\n");
+//		    buffer.append("\t}\n");
+	    	    break;
+	    	case "resource" :
+//		    buffer.append("\t\t?s" + prefix + "_" +  var + " ?p" + prefix + "_" + var + " ?o" + prefix + "_" + var + " . # " + parent.getId() + " : " + property.getLabel() + "\n");
+		    buffer.append("\tUNION { # " + property.getType() + "\n");
+//		    buffer.append("\t\t" + subjectURI + " <" + property.getURI() + "> ?s" + prefix + "_" + var + " . # " + callPath + "\n");
+		    buffer.append("\t\t?s" + prefix + "_" + var + " ?p" + prefix + "_" + var + " ?o" + prefix + "_" + var + " . # " + callPath + " : " + property.getURI() + "\n");
+		    buffer.append("\t}\n");
+		    for (String name : property.getValueConstraint().getValueTemplateRefs()) {
+			ResourceTemplate child = resourceHash.get(name);
+			generateWhereClauses(subjectURI, buffer, child, prefix+"_"+var, callPath+" | "+parent.getId());
+		    }
+	    	    break;
+		default :
+		    logger.error("*** unrecognized property type: " + property.getType());
+		    break;
+	    }
+	    var++;
+	}
     }
 
     static void simpleStmt(String queryString) {
