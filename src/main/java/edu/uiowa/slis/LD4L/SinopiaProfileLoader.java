@@ -15,6 +15,14 @@ import java.util.Hashtable;
 import java.util.Properties;
 import java.util.Vector;
 
+import org.apache.jena.query.ParameterizedSparqlString;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.rdf.model.Model;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.json.JSONArray;
@@ -60,7 +68,10 @@ public class SinopiaProfileLoader {
 	}
 	
 	processProfiles();
-	generateQuery("profile:bf2:Monograph:Work", "<http://share-vde.org/sharevde/rdfBibframe2/Work/18724624>");
+	String query = generateQuery("profile:bf2:Monograph:Work", "<http://share-vde.org/sharevde/rdfBibframe2/Work/18724624>");
+//	String query = generateQuery("profile:bf2:Note", "<http://share-vde.org/sharevde/rdfBibframe2/Note/0ecbf13a-411a-3c96-a8c3-03ac28c7bbf3>");
+	
+	executeQuery(query);
     }
 
     static void processFile(File theFile) throws IOException, SQLException {
@@ -182,7 +193,7 @@ public class SinopiaProfileLoader {
 	}
     }
     
-    static void generateQuery(String id, String subjectURI) {
+    static String generateQuery(String id, String subjectURI) {
 	int var = 1;
 	ResourceTemplate resource = resourceHash.get(id);
 	logger.info("selecting reqource: " + resource.getId());
@@ -205,6 +216,7 @@ public class SinopiaProfileLoader {
 	buffer.append("}\n");
 	
 	logger.info("query:\n" + buffer);
+	return buffer.toString();
     }
     
     static void generateTriplePatterns(StringBuffer buffer, ResourceTemplate parent, String prefix, Vector<ResourceTemplate> callStack) {
@@ -287,8 +299,14 @@ public class SinopiaProfileLoader {
 	    var++;
 	}
     }
-
-    static void simpleStmt(String queryString) {
+    
+    static void executeQuery(String query) {
+	QueryExecution theClassExecution = QueryExecutionFactory.sparqlService("http://services.ld4l.org/fuseki/stanford_share_vde/sparql", query);
+	Model model = theClassExecution.execConstruct();
+	logger.info("model: " + model);
+    }
+    
+   static void simpleStmt(String queryString) {
         try {
             logger.info("executing " + queryString + "...");
             PreparedStatement beginStmt = conn.prepareStatement(queryString);
