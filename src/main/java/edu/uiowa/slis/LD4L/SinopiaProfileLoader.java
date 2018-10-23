@@ -15,14 +15,10 @@ import java.util.Hashtable;
 import java.util.Properties;
 import java.util.Vector;
 
-import org.apache.jena.query.ParameterizedSparqlString;
-import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
-import org.apache.jena.query.QueryFactory;
-import org.apache.jena.query.QuerySolution;
-import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.json.JSONArray;
@@ -68,7 +64,8 @@ public class SinopiaProfileLoader {
 	}
 	
 	processProfiles();
-	String query = generateQuery("profile:bf2:Monograph:Work", "<http://share-vde.org/sharevde/rdfBibframe2/Work/18724624>");
+	String query = generateQuery("profile:bf2:Monograph:Work", "<http://share-vde.org/sharevde/rdfBibframe2/Work/1077934>");
+//	String query = generateQuery("profile:bf2:Monograph:Instance", "<http://share-vde.org/sharevde/rdfBibframe2/Instance/STANFORD32352>");
 //	String query = generateQuery("profile:bf2:Note", "<http://share-vde.org/sharevde/rdfBibframe2/Note/0ecbf13a-411a-3c96-a8c3-03ac28c7bbf3>");
 	
 	executeQuery(query);
@@ -278,18 +275,21 @@ public class SinopiaProfileLoader {
 		    char var2 = 'a';
 		    boolean first = true;
 		    for (ResourceTemplate ancestor : callStack) {
-			buffer.append("\t\t" + (first ? subjectURI : "?s"+prefix+"_"+var+"_"+var2) + " <" + ancestor.getURI() + "> ?s" + prefix+"_"+var + "_" + (first ? var2 : ++var2) + ". \n");
+			buffer.append("\t\t" + (first ? subjectURI : "?s"+prefix+"_"+var+"_"+var2) + " <" + ancestor.getLinkTemplate().getURI() + "> ?s" + prefix+"_"+var + "_" + (first ? var2 : ++var2) + " . \n");
 			first = false;
 		    }
-		    buffer.append("\t\t" + (first ? subjectURI : "?s"+prefix+"_"+var+"_"+var2) + " <" + parent.getURI() + "> ?s" + prefix+"_"+var + "_" + (first ? var2 : ++var2) + ". \n");
+		    if (callStack.size() > 0 && parent.getLinkTemplate() != null)
+			buffer.append("\t\t" + (first ? subjectURI : "?s"+prefix+"_"+var+"_"+var2) + " <" + parent.getLinkTemplate().getURI() + "> ?s" + prefix+"_"+var + "_" + (first ? var2 : ++var2) + " . \n");
 		    buffer.append("\t\t" + (first ? subjectURI : "?s"+prefix+"_"+var+"_"+var2) + " <" + property.getURI() + "> ?s" + prefix+"_"+var + ". \n");
 		    buffer.append("\t\t?s" + prefix + "_" + var + " ?p" + prefix + "_" + var + " ?o" + prefix + "_" + var + " .\n");
 		    buffer.append("\t}\n");
 		    for (String name : property.getValueConstraint().getValueTemplateRefs()) {
 			ResourceTemplate child = resourceHash.get(name);
+			parent.setLinkTemplate(property);
 			callStack.add(parent);
 			generateWhereClauses(subjectURI, buffer, child, prefix+"_"+var, callStack);
 			callStack.removeElement(parent);
+			parent.setLinkTemplate(null);
 		    }
 	    	    break;
 		default :
@@ -304,6 +304,9 @@ public class SinopiaProfileLoader {
 	QueryExecution theClassExecution = QueryExecutionFactory.sparqlService("http://services.ld4l.org/fuseki/stanford_share_vde/sparql", query);
 	Model model = theClassExecution.execConstruct();
 	logger.info("model: " + model);
+	for (Statement node : model.listStatements().toList()) {
+	    logger.info("node: " + node);
+	}
     }
     
    static void simpleStmt(String queryString) {

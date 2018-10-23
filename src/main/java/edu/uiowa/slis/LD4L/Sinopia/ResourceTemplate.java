@@ -8,6 +8,7 @@ public class ResourceTemplate {
     String label = null;
     String remark = null;
     Vector<PropertyTemplate> propertyTemplates = new Vector<PropertyTemplate>();
+    PropertyTemplate linkTemplate = null;
     
     public ResourceTemplate(String id, String URI, String label, String remark) {
 	this.id = id;
@@ -70,6 +71,14 @@ public class ResourceTemplate {
 
     public void setPropertyTemplates(Vector<PropertyTemplate> propertyTemplates) {
         this.propertyTemplates = propertyTemplates;
+    }
+
+    public PropertyTemplate getLinkTemplate() {
+        return linkTemplate;
+    }
+
+    public void setLinkTemplate(PropertyTemplate linkTemplate) {
+        this.linkTemplate = linkTemplate;
     }
 
 }
