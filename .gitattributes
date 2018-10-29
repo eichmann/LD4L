@@ -10,6 +10,13 @@
 /pom.xml -text
 src/main/java/edu/uiowa/slis/LD4L/Indexer.java -text
 src/main/java/edu/uiowa/slis/LD4L/NTripleEncoder.java -text
+src/main/java/edu/uiowa/slis/LD4L/ShortStory/Author.java -text
+src/main/java/edu/uiowa/slis/LD4L/ShortStory/CommaByExtractor.java -text
+src/main/java/edu/uiowa/slis/LD4L/ShortStory/CommaExtractor.java -text
+src/main/java/edu/uiowa/slis/LD4L/ShortStory/Extractor.java -text
+src/main/java/edu/uiowa/slis/LD4L/ShortStory/ShortStory.java -text
+src/main/java/edu/uiowa/slis/LD4L/ShortStory/SlashExtractor.java -text
+src/main/java/edu/uiowa/slis/LD4L/ShortStoryLoader.java -text
 src/main/java/edu/uiowa/slis/LD4L/Sinopia/Profile.java -text
 src/main/java/edu/uiowa/slis/LD4L/Sinopia/PropertyTemplate.java -text
 src/main/java/edu/uiowa/slis/LD4L/Sinopia/ResourceTemplate.java -text
