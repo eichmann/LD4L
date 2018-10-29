@@ -5,11 +5,10 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
-import edu.uiowa.slis.LD4L.ShortStoryLoader;
-
 public class CommaExtractor extends Extractor {
     static Logger logger = Logger.getLogger(CommaExtractor.class);
-    Pattern pattern = Pattern.compile("([^,]*), ([A-Z]\\. *([A-Z]\\.)?)( and ([^,]*), ([A-Z]\\.( *[A-Z]\\.)?))? +(?!and )(.*)");
+    String namePattern = "([^,]*), ([A-Z]\\. *([A-Z]\\.)?)";
+    Pattern pattern = Pattern.compile(namePattern+"( and "+namePattern+")? +(?!and )(.*)");
 
     public int matchCount(String[] entries) {
 	int matches = 0;

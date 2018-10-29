@@ -5,6 +5,7 @@ import java.util.regex.Pattern;
 
 public class CommaByExtractor extends Extractor {
     Pattern pattern = Pattern.compile("(.*) *, *([bB]y *)?([^/]+)$");
+    Pattern pattern2 = Pattern.compile("(.*[!?]) *([bB]y *)?([^/]+)$");
 
     public int matchCount(String[] entries) {
 	int matches = 0;
@@ -26,7 +27,13 @@ public class CommaByExtractor extends Extractor {
 	    story.setTitle(matcher.group(1));
 	    story.setAuthor(new Author(matcher.group(3)));
 	} else {
-	    story.setTitle(entry);
+	    Matcher matcher2 = pattern2.matcher(entry);
+	    if (matcher2.find()) {
+		story.setTitle(matcher2.group(1));
+		story.setAuthor(new Author(matcher2.group(3)));
+	    } else {
+		story.setTitle(entry);
+	    }
 	}
 	
 	return story;
