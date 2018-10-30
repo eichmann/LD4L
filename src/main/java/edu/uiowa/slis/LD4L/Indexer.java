@@ -58,7 +58,7 @@ public class Indexer {
 	} else if (args.length == 1 && args[0].equals("nalt")) {
 	    tripleStore = dataPath + "NALT";
 	    endpoint = "http://services.ld4l.org/fuseki/" + args[0] + "/sparql";
-	} else if (args.length > 1 && args[0].equals("loc") && !args[1].equals("subjects") && !args[1].equals("genre")) {
+	} else if (args.length > 1 && args[0].equals("loc") && !args[1].equals("subjects") && !args[1].equals("genre") && !args[1].equals("demographics") && !args[1].equals("performance") && !args[1].equals("works_instances")) {
 	    tripleStore = dataPath + "LoC/names";
 	    endpoint = "http://services.ld4l.org/fuseki/loc_names/sparql";
 	} else if (args.length > 1 && args[0].equals("loc") && args[1].equals("subjects")) {
@@ -67,6 +67,15 @@ public class Indexer {
 	} else if (args.length > 1 && args[0].equals("loc") && args[1].equals("genre")) {
 	    tripleStore = dataPath + "LoC/genre";
 	    endpoint = "http://services.ld4l.org/fuseki/loc_genre/sparql";
+	} else if (args.length > 1 && args[0].equals("loc") && args[1].equals("demographics")) {
+	    tripleStore = dataPath + "LoC/demographics";
+	    endpoint = "http://services.ld4l.org/fuseki/loc_demographics/sparql";
+	} else if (args.length > 1 && args[0].equals("loc") && args[1].equals("performance")) {
+	    tripleStore = dataPath + "LoC/performance";
+	    endpoint = "http://services.ld4l.org/fuseki/loc_performance/sparql";
+	} else if (args.length > 1 && args[0].equals("loc") && args[1].equals("works_instances")) {
+	    tripleStore = dataPath + "LoC/works_instances";
+	    endpoint = "http://services.ld4l.org/fuseki/loc_works_instances/sparql";
 	} else if (args.length > 1 && args[0].equals("getty") && args[1].equals("aat")) {
 	    tripleStore = dataPath + "Getty/AAT";
 	    endpoint = "http://services.ld4l.org/fuseki/getty_aat/sparql";
@@ -110,6 +119,12 @@ public class Indexer {
 	    lucenePath = dataPath + "LD4L/lucene/loc/subjects";
 	if (args.length > 1 && args[0].equals("loc") && args[1].equals("genre"))
 	    lucenePath = dataPath + "LD4L/lucene/loc/genre";
+	if (args.length > 1 && args[0].equals("loc") && args[1].equals("demographics"))
+	    lucenePath = dataPath + "LD4L/lucene/loc/demographics";
+	if (args.length > 1 && args[0].equals("loc") && args[1].equals("performance"))
+	    lucenePath = dataPath + "LD4L/lucene/loc/performance";
+	if (args.length > 1 && args[0].equals("loc") && args[1].equals("works_instances"))
+	    lucenePath = dataPath + "LD4L/lucene/loc/works_instances";
 	if (args.length > 1 && args[0].equals("getty") && args[1].equals("aat"))
 	    lucenePath = dataPath + "LD4L/lucene/getty/aat";
 	if (args.length > 1 && args[0].equals("getty") && args[1].equals("aat_facets"))
@@ -158,6 +173,12 @@ public class Indexer {
 	    indexLoCSubjects(theWriter);
 	if (args.length > 0 && args[0].equals("loc") && args[1].equals("genre"))
 	    indexLoCGenre(theWriter);
+	if (args.length > 0 && args[0].equals("loc") && args[1].equals("demographics"))
+	    indexLoCDemographics(theWriter);
+	if (args.length > 0 && args[0].equals("loc") && args[1].equals("performance"))
+	    indexLoCPerformance(theWriter);
+	if (args.length > 0 && args[0].equals("loc") && args[1].equals("works_instances"))
+	    indexLoCWorksInstances(theWriter);
 	if (args.length > 0 && args[0].equals("getty") && args[1].equals("aat"))
 	    indexGetty(theWriter, "getty:Concept");
 	if (args.length > 0 && args[0].equals("getty") && args[1].equals("aat_facets"))
@@ -713,6 +734,141 @@ public class Indexer {
 		logger.info("count: " + count);
 	}
 	logger.info("total names: " + count);
+    }
+
+    static void indexLoCDemographics(IndexWriter theWriter) throws CorruptIndexException, IOException {
+	int count = 0;
+	String query =
+		"SELECT ?uri ?subject WHERE { "
+		+ "?uri skos:prefLabel ?subject . "
+    		+ "} ";
+	logger.info("triplestore: " + tripleStore);
+	logger.info("query: " + query);
+	ResultSet rs = getResultSet(prefix + query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String URI = sol.get("?uri").toString();
+	    String subject = sol.get("?subject").asLiteral().getString();
+	    
+	    if (!URI.startsWith("http:"))
+		continue;
+	    
+	    logger.info("uri: " + URI + "\tsubject: " + subject);
+	    
+	    Document theDocument = new Document();
+	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("name", subject, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("content", retokenizeString(subject, true), Field.Store.NO, Field.Index.ANALYZED));
+
+	    String query1 = 
+		  "SELECT DISTINCT ?altlabel WHERE { "
+			  + "<" + URI + "> skos:altLabel ?altlabel . "
+		+ "}";
+	    ResultSet prs = getResultSet(prefix + query1);
+	    while (prs.hasNext()) {
+		QuerySolution psol = prs.nextSolution();
+		String altlabel = psol.get("?altlabel").asLiteral().getString();
+		logger.info("\talt label: " + altlabel);
+		theDocument.add(new Field("content", altlabel, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    theWriter.addDocument(theDocument);
+	    count++;
+	    if (count % 100000 == 0)
+		logger.info("count: " + count);
+	}
+	logger.info("total demographics: " + count);
+    }
+
+    static void indexLoCPerformance(IndexWriter theWriter) throws CorruptIndexException, IOException {
+	int count = 0;
+	String query =
+		"SELECT ?uri ?subject WHERE { "
+		+ "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?subject . "
+    		+ "} ";
+	logger.info("triplestore: " + tripleStore);
+	logger.info("query: " + query);
+	ResultSet rs = getResultSet(prefix + query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String URI = sol.get("?uri").toString();
+	    String subject = sol.get("?subject").asLiteral().getString();
+	    
+	    if (!URI.startsWith("http:"))
+		continue;
+	    
+	    logger.info("uri: " + URI + "\tsubject: " + subject);
+	    
+	    Document theDocument = new Document();
+	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("name", subject, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("content", retokenizeString(subject, true), Field.Store.NO, Field.Index.ANALYZED));
+
+	    String query1 = 
+		  "SELECT DISTINCT ?altlabel WHERE { "
+			  + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#hasVariant> ?x . "
+			  + "?x <http://www.loc.gov/mads/rdf/v1#variantLabel> ?altlabel . "
+		+ "}";
+	    ResultSet prs = getResultSet(prefix + query1);
+	    while (prs.hasNext()) {
+		QuerySolution psol = prs.nextSolution();
+		String altlabel = psol.get("?altlabel").asLiteral().getString();
+		logger.info("\talt label: " + altlabel);
+		theDocument.add(new Field("content", altlabel, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    theWriter.addDocument(theDocument);
+	    count++;
+	    if (count % 100000 == 0)
+		logger.info("count: " + count);
+	}
+	logger.info("total performance: " + count);
+    }
+
+    static void indexLoCWorksInstances(IndexWriter theWriter) throws CorruptIndexException, IOException {
+	int count = 0;
+	String query =
+		"SELECT ?uri ?subject WHERE { "
+		+ "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://id.loc.gov/ontologies/bibframe/Instance> . "
+		+ "?uri <http://www.w3.org/2000/01/rdf-schema#label> ?subject . "
+    		+ "} ";
+	logger.info("triplestore: " + tripleStore);
+	logger.info("query: " + query);
+	ResultSet rs = getResultSet(prefix + query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String URI = sol.get("?uri").toString();
+	    String subject = sol.get("?subject").asLiteral().getString();
+	    
+	    if (!URI.startsWith("http:"))
+		continue;
+	    
+	    logger.info("uri: " + URI + "\tsubject: " + subject);
+	    
+	    Document theDocument = new Document();
+	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("name", subject, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("content", retokenizeString(subject, true), Field.Store.NO, Field.Index.ANALYZED));
+
+//	    String query1 = 
+//		  "SELECT DISTINCT ?altlabel WHERE { "
+//			  + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#hasVariant> ?x . "
+//			  + "?x <http://www.loc.gov/mads/rdf/v1#variantLabel> ?altlabel . "
+//		+ "}";
+//	    ResultSet prs = getResultSet(prefix + query1);
+//	    while (prs.hasNext()) {
+//		QuerySolution psol = prs.nextSolution();
+//		String altlabel = psol.get("?altlabel").asLiteral().getString();
+//		logger.info("\talt label: " + altlabel);
+//		theDocument.add(new Field("content", altlabel, Field.Store.NO, Field.Index.ANALYZED));
+//	    }
+	    
+	    theWriter.addDocument(theDocument);
+	    count++;
+	    if (count % 100000 == 0)
+		logger.info("count: " + count);
+	}
+	logger.info("total performance: " + count);
     }
 
     static void indexVariant(Document theDocument, String uri, String className) throws CorruptIndexException, IOException {
