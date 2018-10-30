@@ -20,9 +20,12 @@
      <#fast>
      <#geonames>
      <#grid>
+     <#loc_demographics>
      <#loc_genre>
      <#loc_names>
+     <#loc_performance>
      <#loc_subjects>
+     <#loc_works_instances>
      <#getty_all>
      <#getty_aat>
      <#getty_tgn>
@@ -106,6 +109,12 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     fuseki:dataset           <#gridTDB> ;
     .
 
+<#loc_demographics>  rdf:type fuseki:Service ;
+    fuseki:name              "loc_demographics" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#loc_demographicsTDB> ;
+    .
+
 <#loc_genre>  rdf:type fuseki:Service ;
     fuseki:name              "loc_genre" ;       # http://host:port/tdb
     fuseki:serviceQuery      "sparql" ;    # SPARQL query service
@@ -118,10 +127,22 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     fuseki:dataset           <#loc_namesTDB> ;
     .
 
+<#loc_performance>  rdf:type fuseki:Service ;
+    fuseki:name              "loc_performance" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#loc_performanceTDB> ;
+    .
+
 <#loc_subjects>  rdf:type fuseki:Service ;
     fuseki:name              "loc_subjects" ;       # http://host:port/tdb
     fuseki:serviceQuery      "sparql" ;    # SPARQL query service
     fuseki:dataset           <#loc_subjectsTDB> ;
+    .
+
+<#loc_works_instances>  rdf:type fuseki:Service ;
+    fuseki:name              "loc_works_instances" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#loc_works_instancesTDB> ;
     .
 
 <#getty_all>  rdf:type fuseki:Service ;
@@ -227,6 +248,11 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     tdb:location "/usr/local/RAID/grid" ;
 	.
     
+<#loc_demographicsTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LoC/demographics" ;
+    .
+    
 <#loc_genreTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LoC/genre" ;
@@ -237,9 +263,19 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     tdb:location "/usr/local/RAID/LoC/names" ;
     .
     
+<#loc_performanceTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LoC/performance" ;
+    .
+    
 <#loc_subjectsTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LoC/subjects" ;
+    .
+
+<#loc_works_instancesTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LoC/works_instances" ;
     .
 
 <#getty_allTDB>
