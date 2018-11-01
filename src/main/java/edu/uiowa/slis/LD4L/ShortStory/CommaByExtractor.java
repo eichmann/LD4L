@@ -3,9 +3,12 @@ package edu.uiowa.slis.LD4L.ShortStory;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.log4j.Logger;
+
 public class CommaByExtractor extends Extractor {
-    Pattern pattern = Pattern.compile("(.*) *, *([bB]y *)?([^/]+)$");
-    Pattern pattern2 = Pattern.compile("(.*[!?]) *([bB]y *)?([^/]+)$");
+    static Logger logger = Logger.getLogger(CommaByExtractor.class);
+    Pattern pattern = Pattern.compile("(.*) *, *([bB]y *)?([^/,]+(, Jr)?)$");
+    Pattern pattern2 = Pattern.compile("(.*[!?]) *([bB]y *)?([^/,]+(, Jr)?)$");
 
     public int matchCount(String[] entries) {
 	int matches = 0;
@@ -24,6 +27,9 @@ public class CommaByExtractor extends Extractor {
 	
 	Matcher matcher = pattern.matcher(entry);
 	if (matcher.find()) {
+	    for (int i = 1; i <= matcher.groupCount(); i++) {
+		logger.info("\t\t\tgroup " + i + ": " + matcher.group(i));
+	    }
 	    story.setTitle(matcher.group(1));
 	    story.setAuthor(new Author(matcher.group(3)));
 	} else {

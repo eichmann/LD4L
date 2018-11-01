@@ -7,7 +7,7 @@ import org.apache.log4j.Logger;
 
 public class SlashExtractor extends Extractor {
     static Logger logger = Logger.getLogger(SlashExtractor.class);
-    Pattern pattern = Pattern.compile("(.*) */ *([bB]y *)?(([^,&\\[](?!and ))+)((,| and|&) (.*))?"+tailJunk+"$");
+    Pattern pattern = Pattern.compile("(.*) */ *([bB]y *)?(([^,&\\[](?!and ))+(, Jr\\.)?)((,| and|&) (.*))?"+tailJunk+"$");
 
     public int matchCount(String[] entries) {
 	int matches = 0;
