@@ -2,6 +2,7 @@ package edu.uiowa.slis.LD4L;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,6 +22,8 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
 
@@ -58,7 +61,7 @@ public class Indexer {
 	} else if (args.length == 1 && args[0].equals("nalt")) {
 	    tripleStore = dataPath + "NALT";
 	    endpoint = "http://services.ld4l.org/fuseki/" + args[0] + "/sparql";
-	} else if (args.length > 1 && args[0].equals("loc") && !args[1].equals("subjects") && !args[1].equals("genre") && !args[1].equals("demographics") && !args[1].equals("performance") && !args[1].equals("works_instances")) {
+	} else if (args.length > 1 && args[0].equals("loc") && !args[1].equals("subjects") && !args[1].equals("genre") && !args[1].equals("demographics") && !args[1].equals("performance") && !args[1].equals("work") && !args[1].equals("instance")) {
 	    tripleStore = dataPath + "LoC/names";
 	    endpoint = "http://services.ld4l.org/fuseki/loc_names/sparql";
 	} else if (args.length > 1 && args[0].equals("loc") && args[1].equals("subjects")) {
@@ -73,7 +76,10 @@ public class Indexer {
 	} else if (args.length > 1 && args[0].equals("loc") && args[1].equals("performance")) {
 	    tripleStore = dataPath + "LoC/performance";
 	    endpoint = "http://services.ld4l.org/fuseki/loc_performance/sparql";
-	} else if (args.length > 1 && args[0].equals("loc") && args[1].equals("works_instances")) {
+	} else if (args.length > 1 && args[0].equals("loc") && args[1].equals("work")) {
+	    tripleStore = dataPath + "LoC/works_instances";
+	    endpoint = "http://services.ld4l.org/fuseki/loc_works_instances/sparql";
+	} else if (args.length > 1 && args[0].equals("loc") && args[1].equals("instance")) {
 	    tripleStore = dataPath + "LoC/works_instances";
 	    endpoint = "http://services.ld4l.org/fuseki/loc_works_instances/sparql";
 	} else if (args.length > 1 && args[0].equals("getty") && args[1].equals("aat")) {
@@ -123,8 +129,10 @@ public class Indexer {
 	    lucenePath = dataPath + "LD4L/lucene/loc/demographics";
 	if (args.length > 1 && args[0].equals("loc") && args[1].equals("performance"))
 	    lucenePath = dataPath + "LD4L/lucene/loc/performance";
-	if (args.length > 1 && args[0].equals("loc") && args[1].equals("works_instances"))
-	    lucenePath = dataPath + "LD4L/lucene/loc/works_instances";
+	if (args.length > 1 && args[0].equals("loc") && args[1].equals("work"))
+	    lucenePath = dataPath + "LD4L/lucene/loc/work";
+	if (args.length > 1 && args[0].equals("loc") && args[1].equals("instance"))
+	    lucenePath = dataPath + "LD4L/lucene/loc/instance";
 	if (args.length > 1 && args[0].equals("getty") && args[1].equals("aat"))
 	    lucenePath = dataPath + "LD4L/lucene/getty/aat";
 	if (args.length > 1 && args[0].equals("getty") && args[1].equals("aat_facets"))
@@ -177,8 +185,20 @@ public class Indexer {
 	    indexLoCDemographics(theWriter);
 	if (args.length > 0 && args[0].equals("loc") && args[1].equals("performance"))
 	    indexLoCPerformance(theWriter);
-	if (args.length > 0 && args[0].equals("loc") && args[1].equals("works_instances"))
-	    indexLoCWorksInstances(theWriter);
+	if (args.length > 0 && args[0].equals("loc") && args[1].equals("work"))
+	    indexLoCWorksInstances(theWriter, "Work");
+	if (args.length > 0 && args[0].equals("loc") && args[1].equals("instance"))
+	    indexLoCWorksInstances(theWriter, "Instance");
+//	if (args.length > 0 && args[0].equals("loc") && args[1].equals("works_instances")) {
+//	    lucenePath = dataPath + "LD4L/lucene/loc/work";
+//	    indexLoCWorksInstances(theWriter, "Work");
+//	    lucenePath = dataPath + "LD4L/lucene/loc/instance";
+//	    indexLoCWorksInstances(theWriter, "Instance");
+//	    Vector<String> requests = new Vector<String>();
+//	    requests.add(dataPath + "LD4L/lucene/loc/work");
+//	    requests.add(dataPath + "LD4L/lucene/loc/instance");
+//	    mergeIndices(requests, dataPath + "LD4L/lucene/loc/works_instances");
+//	}
 	if (args.length > 0 && args[0].equals("getty") && args[1].equals("aat"))
 	    indexGetty(theWriter, "getty:Concept");
 	if (args.length > 0 && args[0].equals("getty") && args[1].equals("aat_facets"))
@@ -825,11 +845,11 @@ public class Indexer {
 	logger.info("total performance: " + count);
     }
 
-    static void indexLoCWorksInstances(IndexWriter theWriter) throws CorruptIndexException, IOException {
+    static void indexLoCWorksInstances(IndexWriter theWriter, String type) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
 		"SELECT ?uri ?subject WHERE { "
-		+ "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://id.loc.gov/ontologies/bibframe/Instance> . "
+		+ "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://id.loc.gov/ontologies/bibframe/"+type+"> . "
 		+ "?uri <http://www.w3.org/2000/01/rdf-schema#label> ?subject . "
     		+ "} ";
 	logger.info("triplestore: " + tripleStore);
@@ -843,7 +863,7 @@ public class Indexer {
 	    if (!URI.startsWith("http:"))
 		continue;
 	    
-	    logger.info("uri: " + URI + "\tsubject: " + subject);
+	    logger.debug("uri: " + URI + "\tsubject: " + subject);
 	    
 	    Document theDocument = new Document();
 	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
@@ -913,5 +933,29 @@ public class Indexer {
 	    QueryExecution qexec = QueryExecutionFactory.create(query, dataset);
 	    return qexec.execSelect();
 	}
+    }
+
+    @SuppressWarnings("deprecation")
+    public static void mergeIndices(Vector<String> requests, String targetPath) throws CorruptIndexException, IOException {
+	IndexWriterConfig config = new IndexWriterConfig(org.apache.lucene.util.Version.LUCENE_30, new StandardAnalyzer(org.apache.lucene.util.Version.LUCENE_30));
+	config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+	config.setRAMBufferSizeMB(500);
+	IndexWriter theWriter = new IndexWriter(FSDirectory.open(new File(targetPath)), config);
+
+	logger.info("sites: " + requests);
+	Directory indices[] = new Directory[requests.size()];
+	for (int i = 0; i < requests.size(); i++) {
+	    indices[i] = FSDirectory.open(new File(requests.elementAt(i)));
+	}
+
+	logger.info("merging indices...");
+	logger.info("\tsource indices: " + requests);
+	logger.info("\ttargetPath: " + targetPath);
+	theWriter.addIndexes(indices);
+
+	logger.info("optimizing index...");
+	theWriter.optimize();
+	theWriter.close();
+	logger.info("done");
     }
 }
