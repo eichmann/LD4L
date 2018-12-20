@@ -100,6 +100,9 @@ public class Indexer {
 	} else if (args.length == 1 && args[0].equals("mesh")) {
 	    tripleStore = dataPath + "MeSH";
 	    endpoint = "http://services.ld4l.org/fuseki/mesh/sparql";
+	} else if (args.length > 1 && args[0].equals("stanford_share_vde")) {
+	    tripleStore = "/usr/local/RAID/LD4L/vde/triplestore";
+	    endpoint = "http://services.ld4l.org/fuseki/stanford_share_vde/sparql";
 	} else {
 	    tripleStore = dataPath + args[0];
 	    endpoint = "http://services.ld4l.org/fuseki/" + args[0] + "/sparql";
@@ -153,6 +156,10 @@ public class Indexer {
 	    lucenePath = dataPath + "LD4L/lucene/dbpedia/organization";
 	if (args.length > 1 && args[0].equals("dbpedia") && args[1].equals("place"))
 	    lucenePath = dataPath + "LD4L/lucene/dbpedia/place";
+	if (args.length > 1 && args[0].equals("stanford_share_vde") && args[1].equals("work"))
+	    lucenePath = dataPath + "LD4L/lucene/stanford_share_vde/work";
+	if (args.length > 1 && args[0].equals("stanford_share_vde") && args[1].equals("instance"))
+	    lucenePath = dataPath + "LD4L/lucene/stanford_share_vde/instance";
 	if (args.length == 1 && args[0].equals("mesh"))
 	    lucenePath = dataPath + "LD4L/lucene/mesh";
 
@@ -221,6 +228,10 @@ public class Indexer {
 	    indexDBpedia(theWriter, "Organization");
 	if (args.length > 0 && args[0].equals("dbpedia") && args[1].equals("place"))
 	    indexDBpedia(theWriter, "Place");
+	if (args.length > 0 && args[0].equals("stanford_share_vde") && args[1].equals("work"))
+	    indexShareVDE(theWriter, "Work");
+	if (args.length > 0 && args[0].equals("stanford_share_vde") && args[1].equals("instance"))
+	    indexShareVDE(theWriter, "Instance");
 	if (args.length > 0 && args[0].equals("mesh"))
 	    indexMeSH(theWriter);
 
@@ -249,6 +260,51 @@ public class Indexer {
 	return buffer.toString().trim();
     }
 
+    static void indexShareVDE(IndexWriter theWriter, String entity) throws CorruptIndexException, IOException {
+	int count = 0;
+	String query =
+		" SELECT DISTINCT ?s where { "+
+		"  graph ?g { "+
+		"    ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://id.loc.gov/ontologies/bibframe/" + entity + "> . "+
+		"  } "+
+		"}";
+	ResultSet rs = getResultSet(prefix + query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String uri = sol.get("?s").toString();
+	    logger.info("uri: " + uri);
+	    
+	    Document theDocument = new Document();
+	    theDocument.add(new Field("uri", uri, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    
+	    boolean first = true;
+	    String query1 = 
+		  "SELECT DISTINCT ?lab WHERE { "
+			 + "  graph ?g { "
+			  + "<" + uri + "> <http://id.loc.gov/ontologies/bibframe/title> ?x. "+
+		"    ?x <http://www.w3.org/2000/01/rdf-schema#label> ?lab. "+
+		"  } "+
+		"}";
+	    ResultSet ars = getResultSet(prefix + query1);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String name = asol.get("?lab").asLiteral().getString();
+		logger.info("\tname: " + name);
+		if (first) {
+		    theDocument.add(new Field("name", name, Field.Store.YES, Field.Index.NOT_ANALYZED));
+		    first = false;
+		}
+		theDocument.add(new Field("content", name, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+
+	    theWriter.addDocument(theDocument);
+	    count++;
+	    if (count % 10000 == 0)
+		logger.info("count: " + count);
+	}
+	logger.info("total " + entity + " count: " + count);
+    }
+    
     static void indexDBpedia(IndexWriter theWriter, String entity) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
