@@ -13,6 +13,7 @@
      <#harvard>
      <#stanford>
      <#stanford_share_vde>
+     <#ucsd_share_vde>
      <#combined>
      <#stanford2>
      <#dbpedia>
@@ -69,6 +70,12 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     fuseki:name              "stanford_share_vde" ;       # http://host:port/tdb
     fuseki:serviceQuery      "sparql" ;    # SPARQL query service
     fuseki:dataset           <#stanford_share_vdeTDB> ;
+    .
+
+<#ucsd_share_vde>  rdf:type fuseki:Service ;
+    fuseki:name              "ucsd_share_vde" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#ucsd_share_vdeTDB> ;
     .
 
 <#combined>  rdf:type fuseki:Service ;
@@ -211,6 +218,11 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
 <#stanford_share_vdeTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LD4L/triplestores/stanford_share_vde" ;
+    .
+
+<#ucsd_share_vdeTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/ucsd_share_vde" ;
     .
 
 <#combinedTDB>
