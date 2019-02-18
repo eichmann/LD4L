@@ -103,6 +103,9 @@ public class Indexer {
 	} else if (args.length > 1 && args[0].equals("stanford_share_vde")) {
 	    tripleStore = "/usr/local/RAID/LD4L/vde/triplestore";
 	    endpoint = "http://services.ld4l.org/fuseki/stanford_share_vde/sparql";
+	} else if (args.length > 1 && args[0].equals("ucsd_share_vde")) {
+	    tripleStore = "/usr/local/RAID/LD4L/vde/ucsd/ucsd_share_vde";
+	    endpoint = "http://services.ld4l.org/fuseki/ucsd_share_vde/sparql";
 	} else {
 	    tripleStore = dataPath + args[0];
 	    endpoint = "http://services.ld4l.org/fuseki/" + args[0] + "/sparql";
@@ -160,6 +163,10 @@ public class Indexer {
 	    lucenePath = dataPath + "LD4L/lucene/stanford_share_vde/work";
 	if (args.length > 1 && args[0].equals("stanford_share_vde") && args[1].equals("instance"))
 	    lucenePath = dataPath + "LD4L/lucene/stanford_share_vde/instance";
+	if (args.length > 1 && args[0].equals("ucsd_share_vde") && args[1].equals("work"))
+	    lucenePath = dataPath + "LD4L/lucene/ucsd_share_vde/work";
+	if (args.length > 1 && args[0].equals("ucsd_share_vde") && args[1].equals("instance"))
+	    lucenePath = dataPath + "LD4L/lucene/ucsd_share_vde/instance";
 	if (args.length == 1 && args[0].equals("mesh"))
 	    lucenePath = dataPath + "LD4L/lucene/mesh";
 
@@ -231,6 +238,10 @@ public class Indexer {
 	if (args.length > 0 && args[0].equals("stanford_share_vde") && args[1].equals("work"))
 	    indexShareVDE(theWriter, "Work");
 	if (args.length > 0 && args[0].equals("stanford_share_vde") && args[1].equals("instance"))
+	    indexShareVDE(theWriter, "Instance");
+	if (args.length > 0 && args[0].equals("ucsd_share_vde") && args[1].equals("work"))
+	    indexShareVDE(theWriter, "Work");
+	if (args.length > 0 && args[0].equals("ucsd_share_vde") && args[1].equals("instance"))
 	    indexShareVDE(theWriter, "Instance");
 	if (args.length > 0 && args[0].equals("mesh"))
 	    indexMeSH(theWriter);
