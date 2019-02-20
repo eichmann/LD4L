@@ -10,6 +10,7 @@
 /pom.xml -text
 src/main/java/edu/uiowa/slis/LD4L/Indexer.java -text
 src/main/java/edu/uiowa/slis/LD4L/NTripleEncoder.java -text
+src/main/java/edu/uiowa/slis/LD4L/SHAREunpack.java -text
 src/main/java/edu/uiowa/slis/LD4L/ShortStory/Author.java -text
 src/main/java/edu/uiowa/slis/LD4L/ShortStory/CommaByExtractor.java -text
 src/main/java/edu/uiowa/slis/LD4L/ShortStory/CommaExtractor.java -text
