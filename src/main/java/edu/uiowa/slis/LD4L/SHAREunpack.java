@@ -25,19 +25,20 @@ public class SHAREunpack {
 
     public static void main(String[] args) throws CompressorException, ArchiveException, IOException {
 	PropertyConfigurator.configure(args[0]);
-//	File folder = new File("/Volumes/Pegasus3/LD4L/vde/cornell");
-	File folder = new File("/Users/eichmann/downloads/cornell");
-	for (File file : folder.listFiles()) {
-	    if (file.getName().endsWith(".tgz")) {
-		processTar(file);
-	    }
-	}
+	File folder = new File("/Volumes/Pegasus3/LD4L/vde/cornell");
+//	File folder = new File("/Users/eichmann/downloads/cornell");
+//	for (File file : folder.listFiles()) {
+//	    if (file.getName().endsWith(".tgz")) {
+//		processTar(file);
+//	    }
+//	}
+	processTar(new File("/Volumes/Pegasus3/LD4L/vde/cornell/Cornell_04.tgz"));
     }
     
     static void processTar(File tarFile) throws CompressorException, ArchiveException, IOException {
 	logger.info("processing tar file: " + tarFile.getName());
-//	File target = new File(tarFile.getParent()+"/"+tarFile.getName().replace(".tgz", ".nq"));
-	File target = new File("/Volumes/SSD2/cornell/"+tarFile.getName().replace(".tgz", ".nq"));
+	File target = new File(tarFile.getParent()+"/"+tarFile.getName().replace(".tgz", ".nq"));
+//	File target = new File("/Volumes/SSD2/cornell/"+tarFile.getName().replace(".tgz", ".nq"));
 	FileWriter writer = new FileWriter(target);
 	InputStream is = new FileInputStream(tarFile);
 	CompressorInputStream in = new CompressorStreamFactory().createCompressorInputStream("gz", is);
@@ -59,18 +60,50 @@ public class SHAREunpack {
 	writer.close();
     }
     
-    static Pattern pattern = Pattern.compile("^(.*vocabulary/languages/[a-zA-Z0-9]+) +([a-zA-Z0-9]+>.*)$");
+    static Pattern blankPattern = Pattern.compile("^(.*vocabulary/languages/[^ >]*) +([^>]*)(>.*)$");
+    static Pattern quotePattern = Pattern.compile("^(.*)\"\"([^\"]+)\"\"(.*)$");
+    static Pattern bracketPattern = Pattern.compile("^(.*)<([^>]+)>> +<(.*)$");
+    static Pattern slashPattern = Pattern.compile("^(<[^>]+> *<[^>]+> *)\"([^\\\"]+[^\\\\])\\\\\"( +<.*)$");
     
     static String rewrite(String buffer) {
 	if (buffer.contains("tagForBlank"))
 	    return buffer.replace("_{$tagForBlankNode.getAttribute('tag')}", "");
-	Matcher matcher = pattern.matcher(buffer);
+	Matcher matcher = blankPattern.matcher(buffer);
+	if (matcher.matches()) {
+	    logger.debug("buffer:" + buffer);
+	    logger.debug("\tmatch 1: " + matcher.group(1));
+	    logger.debug("\tmatch 2: " + matcher.group(2));
+	    logger.debug("\tmatch 3: " + matcher.group(3));
+	    if (matcher.group(2).length() == 0)
+		return matcher.group(1) + matcher.group(3);
+	    else
+		return matcher.group(1) + "_" + matcher.group(2).trim().replace(" ", "_") + matcher.group(3);
+	}
+	matcher = quotePattern.matcher(buffer);
 	if (matcher.matches()) {
 	    logger.info("buffer:" + buffer);
 	    logger.info("\tmatch 1: " + matcher.group(1));
 	    logger.info("\tmatch 2: " + matcher.group(2));
-	    return matcher.group(1) + "_" + matcher.group(2);
+	    logger.info("\tmatch 3: " + matcher.group(3));
+	    return matcher.group(1) + "\"" + matcher.group(2) + "\"" + matcher.group(3);
 	}
+	matcher = bracketPattern.matcher(buffer);
+	if (matcher.matches()) {
+	    logger.info("buffer:" + buffer);
+	    logger.info("\tmatch 1: " + matcher.group(1));
+	    logger.info("\tmatch 2: " + matcher.group(2));
+	    logger.info("\tmatch 3: " + matcher.group(3));
+	    return matcher.group(1) + matcher.group(2) + "> <" + matcher.group(3);
+	}
+	matcher = slashPattern.matcher(buffer);
+	if (matcher.matches()) {
+	    logger.info("buffer:" + buffer);
+	    logger.info("\tmatch 1: " + matcher.group(1));
+	    logger.info("\tmatch 2: " + matcher.group(2));
+	    logger.info("\tmatch 3: " + matcher.group(3));
+	    return matcher.group(1) + "\"" + matcher.group(2) + "\"" + matcher.group(3);
+	}
+	buffer = buffer.replace("\\043", "");
 	return buffer;
     }
 
