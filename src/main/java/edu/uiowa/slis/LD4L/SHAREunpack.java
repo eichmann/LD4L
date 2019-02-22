@@ -32,7 +32,7 @@ public class SHAREunpack {
 //		processTar(file);
 //	    }
 //	}
-	processTar(new File("/Volumes/Pegasus3/LD4L/vde/cornell/Cornell_04.tgz"));
+	processTar(new File("/Volumes/Pegasus3/LD4L/vde/cornell/Cornell_03.tgz"));
     }
     
     static void processTar(File tarFile) throws CompressorException, ArchiveException, IOException {
@@ -61,7 +61,7 @@ public class SHAREunpack {
     }
     
     static Pattern blankPattern = Pattern.compile("^(.*vocabulary/languages/[^ >]*) +([^>]*)(>.*)$");
-    static Pattern quotePattern = Pattern.compile("^(.*)\"\"([^\"]+)\"\"(.*)$");
+    static Pattern quotePattern = Pattern.compile("^(<[^>]+> *<[^>]+> *)\"\"?([^\"]+)\"\"( +<.*)$");
     static Pattern bracketPattern = Pattern.compile("^(.*)<([^>]+)>> +<(.*)$");
     static Pattern slashPattern = Pattern.compile("^(<[^>]+> *<[^>]+> *)\"([^\\\"]+[^\\\\])\\\\\"( +<.*)$");
     
@@ -81,11 +81,14 @@ public class SHAREunpack {
 	}
 	matcher = quotePattern.matcher(buffer);
 	if (matcher.matches()) {
-	    logger.info("buffer:" + buffer);
+	    logger.info("quote buffer:" + buffer);
+	    String literal = matcher.group(2);
+	    if (literal.endsWith("\\"))
+		literal = literal.substring(0, literal.length()-1);
 	    logger.info("\tmatch 1: " + matcher.group(1));
-	    logger.info("\tmatch 2: " + matcher.group(2));
+	    logger.info("\tmatch 2: " + literal);
 	    logger.info("\tmatch 3: " + matcher.group(3));
-	    return matcher.group(1) + "\"" + matcher.group(2) + "\"" + matcher.group(3);
+	    return matcher.group(1) + "\"" + literal + "\"" + matcher.group(3);
 	}
 	matcher = bracketPattern.matcher(buffer);
 	if (matcher.matches()) {
