@@ -32,7 +32,7 @@ public class SHAREunpack {
 //		processTar(file);
 //	    }
 //	}
-	processTar(new File("/Volumes/Pegasus3/LD4L/vde/cornell/Cornell_03.tgz"));
+	processTar(new File("/Volumes/Pegasus3/LD4L/vde/cornell/Cornell_07.tgz"));
     }
     
     static void processTar(File tarFile) throws CompressorException, ArchiveException, IOException {
@@ -64,6 +64,7 @@ public class SHAREunpack {
     static Pattern quotePattern = Pattern.compile("^(<[^>]+> *<[^>]+> *)\"\"?([^\"]+)\"\"( +<.*)$");
     static Pattern bracketPattern = Pattern.compile("^(.*)<([^>]+)>> +<(.*)$");
     static Pattern slashPattern = Pattern.compile("^(<[^>]+> *<[^>]+> *)\"([^\\\"]+[^\\\\])\\\\\"( +<.*)$");
+    static Pattern blankPattern2 = Pattern.compile("^(.*vocabulary/organizations/[^ >]*) +([^>]*)(>.*)$");
     
     static String rewrite(String buffer) {
 	if (buffer.contains("tagForBlank"))
@@ -79,15 +80,26 @@ public class SHAREunpack {
 	    else
 		return matcher.group(1) + "_" + matcher.group(2).trim().replace(" ", "_") + matcher.group(3);
 	}
+	matcher = blankPattern2.matcher(buffer);
+	if (matcher.matches()) {
+	    logger.info("buffer:" + buffer);
+	    logger.info("\tmatch 1: " + matcher.group(1));
+	    logger.info("\tmatch 2: " + matcher.group(2));
+	    logger.info("\tmatch 3: " + matcher.group(3));
+	    if (matcher.group(2).length() == 0)
+		return matcher.group(1) + matcher.group(3);
+	    else
+		return matcher.group(1) + "_" + matcher.group(2).trim().replace(" ", "_") + matcher.group(3);
+	}
 	matcher = quotePattern.matcher(buffer);
 	if (matcher.matches()) {
-	    logger.info("quote buffer:" + buffer);
+	    logger.debug("quote buffer:" + buffer);
 	    String literal = matcher.group(2);
 	    if (literal.endsWith("\\"))
 		literal = literal.substring(0, literal.length()-1);
-	    logger.info("\tmatch 1: " + matcher.group(1));
-	    logger.info("\tmatch 2: " + literal);
-	    logger.info("\tmatch 3: " + matcher.group(3));
+	    logger.debug("\tmatch 1: " + matcher.group(1));
+	    logger.debug("\tmatch 2: " + literal);
+	    logger.debug("\tmatch 3: " + matcher.group(3));
 	    return matcher.group(1) + "\"" + literal + "\"" + matcher.group(3);
 	}
 	matcher = bracketPattern.matcher(buffer);
@@ -106,7 +118,7 @@ public class SHAREunpack {
 	    logger.info("\tmatch 3: " + matcher.group(3));
 	    return matcher.group(1) + "\"" + matcher.group(2) + "\"" + matcher.group(3);
 	}
-	buffer = buffer.replace("\\043", "");
+	buffer = buffer.replace("\\043", "").replace("\\h", "_");
 	return buffer;
     }
 
