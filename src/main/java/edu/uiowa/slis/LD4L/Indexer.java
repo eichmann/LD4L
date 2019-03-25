@@ -132,8 +132,12 @@ public class Indexer {
 	    lucenePath = dataPath + "LD4L/lucene/loc/titles";
 	if (args.length > 1 && args[0].equals("loc") && args[1].equals("subjects"))
 	    lucenePath = dataPath + "LD4L/lucene/loc/subjects";
-	if (args.length > 1 && args[0].equals("loc") && args[1].equals("genre"))
-	    lucenePath = dataPath + "LD4L/lucene/loc/genre";
+	if (args.length > 1 && args[0].equals("loc") && args[1].equals("genre")) {
+	    if (args[2].equals("deprecated"))
+		lucenePath = dataPath + "LD4L/lucene/loc/genre_deprecated";
+	    else
+		lucenePath = dataPath + "LD4L/lucene/loc/genre_active";
+	}
 	if (args.length > 1 && args[0].equals("loc") && args[1].equals("demographics"))
 	    lucenePath = dataPath + "LD4L/lucene/loc/demographics";
 	if (args.length > 1 && args[0].equals("loc") && args[1].equals("performance"))
@@ -201,7 +205,7 @@ public class Indexer {
 	if (args.length > 0 && args[0].equals("loc") && args[1].equals("subjects"))
 	    indexLoCSubjects(theWriter);
 	if (args.length > 0 && args[0].equals("loc") && args[1].equals("genre"))
-	    indexLoCGenre(theWriter);
+	    indexLoCGenre(theWriter, args[2].equals("deprecated"));
 	if (args.length > 0 && args[0].equals("loc") && args[1].equals("demographics"))
 	    indexLoCDemographics(theWriter);
 	if (args.length > 0 && args[0].equals("loc") && args[1].equals("performance"))
@@ -790,11 +794,17 @@ public class Indexer {
 	logger.info("total names: " + count);
     }
 
-    static void indexLoCGenre(IndexWriter theWriter) throws CorruptIndexException, IOException {
+    // <http://id.loc.gov/authorities/genreForms/gf2011026608> <http://www.loc.gov/mads/rdf/v1#adminMetadata> _:bnode11622439792158605647 .
+    // _:bnode11622439792158605647 <http://id.loc.gov/ontologies/RecordInfo#recordStatus> "deprecated" .
+    // _:bnode12837739696807266797 <http://id.loc.gov/ontologies/RecordInfo#recordStatus> "revised" .
+    // _:bnode427471899577210033 <http://id.loc.gov/ontologies/RecordInfo#recordStatus> "new" .
+    static void indexLoCGenre(IndexWriter theWriter, boolean deprecated) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
-		"SELECT ?uri ?subject WHERE { "
+		"SELECT ?uri ?subject ?status WHERE { "
 		+ "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?subject . "
+		+ "?uri <http://www.loc.gov/mads/rdf/v1#adminMetadata> ?stat . "
+		+ "?stat <http://id.loc.gov/ontologies/RecordInfo#recordStatus> ?status . "
     		+ "} ";
 	logger.info("triplestore: " + tripleStore);
 	logger.info("query: " + query);
@@ -803,11 +813,12 @@ public class Indexer {
 	    QuerySolution sol = rs.nextSolution();
 	    String URI = sol.get("?uri").toString();
 	    String subject = sol.get("?subject").asLiteral().getString();
+	    String status = sol.get("?status").asLiteral().getString();
 	    
-	    if (!URI.startsWith("http:"))
+	    if (!URI.startsWith("http:") || (deprecated && !status.equals("deprecated")) || (!deprecated && status.equals("deprecated")))
 		continue;
 	    
-	    logger.info("uri: " + URI + "\tsubject: " + subject);
+	    logger.info("uri: " + URI + "\tsubject: " + subject + "\tstatus: " + status);
 	    
 	    Document theDocument = new Document();
 	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
