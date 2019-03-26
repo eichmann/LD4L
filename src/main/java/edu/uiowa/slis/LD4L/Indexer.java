@@ -867,19 +867,39 @@ public class Indexer {
 	    Document theDocument = new Document();
 	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("name", subject, Field.Store.YES, Field.Index.NOT_ANALYZED));
-	    theDocument.add(new Field("content", retokenizeString(subject, true), Field.Store.NO, Field.Index.ANALYZED));
+	    for (int i = 0; i < 10; i++) // result weighting hack
+		theDocument.add(new Field("content", retokenizeString(subject, true), Field.Store.NO, Field.Index.ANALYZED));
 
-	    String query1 = 
-		  "SELECT DISTINCT ?altlabel WHERE { "
+	    // subject <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Authority>
+	    
+	    // http://www.w3.org/2004/02/skos/core#broader uri skos:prefLabel literal
+	    // http://www.w3.org/2004/02/skos/core#narrower uri skos:prefLabel literal
+	    // http://www.loc.gov/mads/rdf/v1#hasVariant blank <http://www.loc.gov/mads/rdf/v1#variantLabel> literal
+	    // <http://www.loc.gov/mads/rdf/v1#hasEarlierEstablishedForm> blank <http://www.loc.gov/mads/rdf/v1#variantLabel> literal
+	    //  <http://www.w3.org/2004/02/skos/core#related> uri skos:prefLabel literal
+	    addWeightedField(
+		theDocument,
+		"SELECT DISTINCT ?altlabel WHERE { "
 			  + "<" + URI + "> skos:altLabel ?altlabel . "
-		+ "}";
-	    ResultSet prs = getResultSet(prefix + query1);
-	    while (prs.hasNext()) {
-		QuerySolution psol = prs.nextSolution();
-		String altlabel = psol.get("?altlabel").asLiteral().getString();
-		logger.info("\talt label: " + altlabel);
-		theDocument.add(new Field("content", altlabel, Field.Store.NO, Field.Index.ANALYZED));
-	    }
+		+ "}",
+		"altLabel",
+		2);
+	    addWeightedField(
+		theDocument,
+		"SELECT DISTINCT ?broader WHERE { "
+			  + "<" + URI + "> <http://www.w3.org/2004/02/skos/core#broader> ?broadURI . "
+			  + "?broadURI skos:prefLabel ?broader . "
+		+ "}",
+		"broader",
+		1);
+	    addWeightedField(
+		theDocument,
+		"SELECT DISTINCT ?narrower WHERE { "
+			  + "<" + URI + "> <http://www.w3.org/2004/02/skos/core#narrower> ?narrowURI . "
+			  + "?narrowURI skos:prefLabel ?narrower . "
+		+ "}",
+		"narrower",
+		1);
 	    
 	    theWriter.addDocument(theDocument);
 	    count++;
@@ -887,6 +907,17 @@ public class Indexer {
 		logger.info("count: " + count);
 	}
 	logger.info("total demographics: " + count);
+    }
+    
+    static void addWeightedField(Document theDocument, String query, String label, int weight) {
+	ResultSet prs = getResultSet(prefix + query);
+	while (prs.hasNext()) {
+	    QuerySolution psol = prs.nextSolution();
+	    String altlabel = psol.get("?"+label).asLiteral().getString();
+	    logger.info("\t" + label + ": " + altlabel + "\tweight: " + weight);
+	    for (int i = 0; i < weight; i++)
+		theDocument.add(new Field("content", retokenizeString(altlabel,true), Field.Store.NO, Field.Index.ANALYZED));
+	}
     }
 
     static void indexLoCPerformance(IndexWriter theWriter) throws CorruptIndexException, IOException {
