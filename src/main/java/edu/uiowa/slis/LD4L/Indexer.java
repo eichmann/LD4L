@@ -882,7 +882,7 @@ public class Indexer {
 		"SELECT DISTINCT ?altlabel WHERE { "
 			  + "<" + URI + "> skos:altLabel ?altlabel . "
 		+ "}",
-		"altLabel",
+		"altlabel",
 		2);
 	    addWeightedField(
 		theDocument,
