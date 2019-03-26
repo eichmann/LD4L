@@ -910,7 +910,7 @@ public class Indexer {
     }
     
     static void addWeightedField(Document theDocument, String query, String label, int weight) {
-	logger.info("label: " + label);
+	logger.info("label: " + label + "\tquery: " + query);
 	ResultSet prs = getResultSet(prefix + query);
 	while (prs.hasNext()) {
 	    QuerySolution psol = prs.nextSolution();
