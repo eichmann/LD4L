@@ -374,8 +374,8 @@ public class Indexer {
 	int count = 0;
 	String query =
 		" SELECT DISTINCT ?s ?lab ?def where { "+
-		"  ?s rdf:type owl:Class . "+
-		"  ?s skos:prefLabel ?lab . "+
+		"  ?s rdf:type <http://id.nlm.nih.gov/mesh/vocab#Term> . "+
+		"  ?s <http://id.nlm.nih.gov/mesh/vocab#prefLabel> ?lab . "+
 		"  OPTIONAL { ?s skos:definition ?def } "+
 		"}";
 	ResultSet rs = getResultSet(prefix + query);
