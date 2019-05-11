@@ -68,6 +68,7 @@ public class SinopiaProfileLoader {
 //	String query = generateQuery("profile:bf2:Monograph:Instance", "<http://share-vde.org/sharevde/rdfBibframe2/Instance/STANFORD32352>");
 //	String query = generateQuery("profile:bf2:Note", "<http://share-vde.org/sharevde/rdfBibframe2/Note/0ecbf13a-411a-3c96-a8c3-03ac28c7bbf3>");
 	
+	storeQuery(query);
 	executeQuery(query);
     }
 
@@ -270,7 +271,7 @@ public class SinopiaProfileLoader {
 	    	    break;
 	    	case "resource" :
 //		    buffer.append("\t\t?s" + prefix + "_" +  var + " ?p" + prefix + "_" + var + " ?o" + prefix + "_" + var + " . # " + parent.getId() + " : " + property.getLabel() + "\n");
-		    buffer.append("\tUNION { # " + property.getType() + "\n");
+		    buffer.append("\tOPTIONAL { # " + property.getType() + "\n");
 		    buffer.append("\t\t# prefix: " + prefix + " var: " + var + "  --  " + callStack + " : " + parent + " : " + property.getURI() + "\n");
 		    char var2 = 'a';
 		    boolean first = true;
@@ -298,6 +299,14 @@ public class SinopiaProfileLoader {
 	    }
 	    var++;
 	}
+    }
+    
+    static void storeQuery(String query) throws SQLException {
+	PreparedStatement stmt = conn.prepareStatement("insert into profiles.sparql values (?,now(),?)");
+	stmt.setInt(1, 1);
+	stmt.setString(2, query);
+	stmt.execute();
+	stmt.close();
     }
     
     static void executeQuery(String query) {
