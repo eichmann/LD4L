@@ -61,7 +61,7 @@ public class Indexer {
 	} else if (args.length == 1 && args[0].equals("nalt")) {
 	    tripleStore = dataPath + "NALT";
 	    endpoint = "http://services.ld4l.org/fuseki/" + args[0] + "/sparql";
-	} else if (args.length > 1 && args[0].equals("loc") && !args[1].equals("subjects") && !args[1].equals("genre") && !args[1].equals("demographics") && !args[1].equals("performance") && !args[1].equals("work") && !args[1].equals("instance")) {
+	} else if (args.length > 1 && (args[0].equals("loc") || args[0].equals("locRWO")) && !args[1].equals("subjects") && !args[1].equals("genre") && !args[1].equals("demographics") && !args[1].equals("performance") && !args[1].equals("work") && !args[1].equals("instance")) {
 	    tripleStore = dataPath + "LoC/names";
 	    endpoint = "http://services.ld4l.org/fuseki/loc_names/sparql";
 	} else if (args.length > 1 && args[0].equals("loc") && args[1].equals("subjects")) {
@@ -130,6 +130,14 @@ public class Indexer {
 	    lucenePath = dataPath + "LD4L/lucene/loc/organizations";
 	if (args.length > 1 && args[0].equals("loc") && args[1].equals("titles"))
 	    lucenePath = dataPath + "LD4L/lucene/loc/titles";
+	if (args.length > 1 && args[0].equals("locRWO") && args[1].equals("names"))
+	    lucenePath = dataPath + "LD4L/lucene/locRWO/names";
+	if (args.length > 1 && args[0].equals("locRWO") && args[1].equals("persons"))
+	    lucenePath = dataPath + "LD4L/lucene/locRWO/persons";
+	if (args.length > 1 && args[0].equals("locRWO") && args[1].equals("organizations"))
+	    lucenePath = dataPath + "LD4L/lucene/locRWO/organizations";
+	if (args.length > 1 && args[0].equals("locRWO") && args[1].equals("titles"))
+	    lucenePath = dataPath + "LD4L/lucene/locRWO/titles";
 	if (args.length > 1 && args[0].equals("loc") && args[1].equals("subjects"))
 	    lucenePath = dataPath + "LD4L/lucene/loc/subjects";
 	if (args.length > 1 && args[0].equals("loc") && args[1].equals("genre")) {
@@ -202,6 +210,14 @@ public class Indexer {
 	    indexLoCNames(theWriter, "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#CorporateName> . ");
 	if (args.length > 0 && args[0].equals("loc") && args[1].equals("titles"))
 	    indexLoCNames(theWriter, "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Title> . ");
+	if (args.length > 0 && args[0].equals("locRWO") && args[1].equals("names"))
+	    indexLoCRWONames(theWriter, "");
+	if (args.length > 0 && args[0].equals("locRWO") && args[1].equals("persons"))
+	    indexLoCRWONames(theWriter, "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#PersonalName> . ");
+	if (args.length > 0 && args[0].equals("locRWO") && args[1].equals("organizations"))
+	    indexLoCRWONames(theWriter, "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#CorporateName> . ");
+	if (args.length > 0 && args[0].equals("locRWO") && args[1].equals("titles"))
+	    indexLoCRWONames(theWriter, "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Title> . ");
 	if (args.length > 0 && args[0].equals("loc") && args[1].equals("subjects"))
 	    indexLoCSubjects(theWriter);
 	if (args.length > 0 && args[0].equals("loc") && args[1].equals("genre"))
@@ -740,6 +756,43 @@ public class Indexer {
 	    annotateLoCName(URI, theDocument, "fieldOfActivity", "label");
 	    annotateLoCName(URI, theDocument, "fieldOfActivity", "authoritativeLabel");
 	    annotateLoCName(URI, theDocument, "occupation", "authoritativeLabel");
+	    theWriter.addDocument(theDocument);
+	    count++;
+	    if (count % 100000 == 0)
+		logger.info("count: " + count);
+	}
+	logger.info("total names: " + count);
+    }
+    
+    static void indexLoCRWONames(IndexWriter theWriter, String typeConstraint) throws CorruptIndexException, IOException {
+	int count = 0;
+	String query =
+		"SELECT ?uri ?name ?rwo WHERE { "
+		+ "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
+		+ typeConstraint
+		+ "?uri <http://www.loc.gov/mads/rdf/v1#identifiesRWO> ?rwo . "
+    		+ "} ";
+	logger.info("query: " + query);
+	ResultSet rs = getResultSet(query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String RWO = sol.get("?rwo").toString();
+	    String URI = sol.get("?uri").toString();
+	    String name = sol.get("?name").asLiteral().getString();
+	    
+	    if (!URI.startsWith("http:"))
+		continue;
+	    
+	    logger.debug("rwo: " + RWO + " uri: " + URI + "\tname: " + name);
+	    
+	    Document theDocument = new Document();
+	    theDocument.add(new Field("uri", RWO, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("name", name, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("content", retokenizeString(name, true), Field.Store.NO, Field.Index.ANALYZED));
+	    annotateLoCName(URI, theDocument, "hasVariant", "variantLabel");
+//	    annotateLoCName(URI, theDocument, "fieldOfActivity", "label");
+//	    annotateLoCName(URI, theDocument, "fieldOfActivity", "authoritativeLabel");
+//	    annotateLoCName(URI, theDocument, "occupation", "authoritativeLabel");
 	    theWriter.addDocument(theDocument);
 	    count++;
 	    if (count % 100000 == 0)
