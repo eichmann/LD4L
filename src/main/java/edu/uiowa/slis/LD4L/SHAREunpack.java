@@ -32,12 +32,14 @@ public class SHAREunpack {
 //		processTar(file);
 //	    }
 //	}
-	processTar(new File("/Volumes/Pegasus3/LD4L/vde/cornell/Cornell_07.tgz"));
+	processTar(new File("/Volumes/Pegasus3/LD4L/vde/SVDE_cornell_Phase3_D1_20190605_01_v2.tar.gz"));
     }
     
     static void processTar(File tarFile) throws CompressorException, ArchiveException, IOException {
 	logger.info("processing tar file: " + tarFile.getName());
-	File target = new File(tarFile.getParent()+"/"+tarFile.getName().replace(".tgz", ".nq"));
+	File target = tarFile.getName().endsWith("tgz")
+			? new File(tarFile.getParent()+"/"+tarFile.getName().replace(".tgz", ".nq"))
+			: new File(tarFile.getParent()+"/"+tarFile.getName().replace(".tar.gz", ".nq"));
 //	File target = new File("/Volumes/SSD2/cornell/"+tarFile.getName().replace(".tgz", ".nq"));
 	FileWriter writer = new FileWriter(target);
 	InputStream is = new FileInputStream(tarFile);
@@ -65,61 +67,75 @@ public class SHAREunpack {
     static Pattern bracketPattern = Pattern.compile("^(.*)<([^>]+)>> +<(.*)$");
     static Pattern slashPattern = Pattern.compile("^(<[^>]+> *<[^>]+> *)\"([^\\\"]+[^\\\\])\\\\\"( +<.*)$");
     static Pattern blankPattern2 = Pattern.compile("^(.*vocabulary/organizations/[^ >]*) +([^>]*)(>.*)$");
+    static Pattern bracePattern = Pattern.compile("^(.*)/\\{(.*)\\}(.*)$");
     
     static String rewrite(String buffer) {
-	if (buffer.contains("tagForBlank"))
-	    return buffer.replace("_{$tagForBlankNode.getAttribute('tag')}", "");
-	Matcher matcher = blankPattern.matcher(buffer);
-	if (matcher.matches()) {
-	    logger.debug("buffer:" + buffer);
-	    logger.debug("\tmatch 1: " + matcher.group(1));
-	    logger.debug("\tmatch 2: " + matcher.group(2));
-	    logger.debug("\tmatch 3: " + matcher.group(3));
-	    if (matcher.group(2).length() == 0)
-		return matcher.group(1) + matcher.group(3);
-	    else
-		return matcher.group(1) + "_" + matcher.group(2).trim().replace(" ", "_") + matcher.group(3);
-	}
-	matcher = blankPattern2.matcher(buffer);
+	Matcher matcher = null;
+//	if (buffer.contains("tagForBlank"))
+//	    return buffer.replace("_{$tagForBlankNode.getAttribute('tag')}", "");
+//	matcher = blankPattern.matcher(buffer);
+//	if (matcher.matches()) {
+//	    logger.info("buffer:" + buffer);
+//	    logger.info("\tmatch 1: " + matcher.group(1));
+//	    logger.info("\tmatch 2: " + matcher.group(2));
+//	    logger.info("\tmatch 3: " + matcher.group(3));
+//	    if (matcher.group(2).length() == 0)
+//		return matcher.group(1) + matcher.group(3);
+//	    else
+//		return matcher.group(1) + "_" + matcher.group(2).trim().replace(" ", "_") + matcher.group(3);
+//	}
+//	matcher = blankPattern2.matcher(buffer);
+//	if (matcher.matches()) {
+//	    logger.info("buffer:" + buffer);
+//	    logger.info("\tmatch 1: " + matcher.group(1));
+//	    logger.info("\tmatch 2: " + matcher.group(2));
+//	    logger.info("\tmatch 3: " + matcher.group(3));
+//	    if (matcher.group(2).length() == 0)
+//		return matcher.group(1) + matcher.group(3);
+//	    else
+//		return matcher.group(1) + "_" + matcher.group(2).trim().replace(" ", "_") + matcher.group(3);
+//	}
+//	matcher = quotePattern.matcher(buffer);
+//	if (matcher.matches()) {
+//	    logger.info("quote buffer:" + buffer);
+//	    String literal = matcher.group(2);
+//	    if (literal.endsWith("\\"))
+//		literal = literal.substring(0, literal.length()-1);
+//	    logger.info("\tmatch 1: " + matcher.group(1));
+//	    logger.info("\tmatch 2: " + literal);
+//	    logger.info("\tmatch 3: " + matcher.group(3));
+//	    return matcher.group(1) + "\"" + literal + "\"" + matcher.group(3);
+//	}
+//	matcher = bracketPattern.matcher(buffer);
+//	if (matcher.matches()) {
+//	    logger.info("buffer:" + buffer);
+//	    logger.info("\tmatch 1: " + matcher.group(1));
+//	    logger.info("\tmatch 2: " + matcher.group(2));
+//	    logger.info("\tmatch 3: " + matcher.group(3));
+//	    return matcher.group(1) + matcher.group(2) + "> <" + matcher.group(3);
+//	}
+//	matcher = slashPattern.matcher(buffer);
+//	if (matcher.matches()) {
+//	    logger.info("buffer:" + buffer);
+//	    logger.info("\tmatch 1: " + matcher.group(1));
+//	    logger.info("\tmatch 2: " + matcher.group(2));
+//	    logger.info("\tmatch 3: " + matcher.group(3));
+//	    return matcher.group(1) + "\"" + matcher.group(2) + "\"" + matcher.group(3);
+//	}
+	matcher = bracePattern.matcher(buffer);
 	if (matcher.matches()) {
 	    logger.info("buffer:" + buffer);
 	    logger.info("\tmatch 1: " + matcher.group(1));
 	    logger.info("\tmatch 2: " + matcher.group(2));
 	    logger.info("\tmatch 3: " + matcher.group(3));
-	    if (matcher.group(2).length() == 0)
-		return matcher.group(1) + matcher.group(3);
-	    else
-		return matcher.group(1) + "_" + matcher.group(2).trim().replace(" ", "_") + matcher.group(3);
+	    return matcher.group(1) + "/_" + matcher.group(2) + "_" + matcher.group(3);
 	}
-	matcher = quotePattern.matcher(buffer);
-	if (matcher.matches()) {
-	    logger.debug("quote buffer:" + buffer);
-	    String literal = matcher.group(2);
-	    if (literal.endsWith("\\"))
-		literal = literal.substring(0, literal.length()-1);
-	    logger.debug("\tmatch 1: " + matcher.group(1));
-	    logger.debug("\tmatch 2: " + literal);
-	    logger.debug("\tmatch 3: " + matcher.group(3));
-	    return matcher.group(1) + "\"" + literal + "\"" + matcher.group(3);
-	}
-	matcher = bracketPattern.matcher(buffer);
-	if (matcher.matches()) {
+	buffer = buffer.replace("|||>", "___>");
+	buffer = buffer.replace("|>", "_>");
+	String buffer2 = buffer.replace("\";%20target=\"%5Fblank", "");
+	if (!buffer2.equals(buffer))
 	    logger.info("buffer:" + buffer);
-	    logger.info("\tmatch 1: " + matcher.group(1));
-	    logger.info("\tmatch 2: " + matcher.group(2));
-	    logger.info("\tmatch 3: " + matcher.group(3));
-	    return matcher.group(1) + matcher.group(2) + "> <" + matcher.group(3);
-	}
-	matcher = slashPattern.matcher(buffer);
-	if (matcher.matches()) {
-	    logger.info("buffer:" + buffer);
-	    logger.info("\tmatch 1: " + matcher.group(1));
-	    logger.info("\tmatch 2: " + matcher.group(2));
-	    logger.info("\tmatch 3: " + matcher.group(3));
-	    return matcher.group(1) + "\"" + matcher.group(2) + "\"" + matcher.group(3);
-	}
-	buffer = buffer.replace("\\043", "").replace("\\h", "_");
-	return buffer;
+	return buffer2;
     }
 
 }
