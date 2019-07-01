@@ -35,7 +35,8 @@ public class SHAREunpack {
 
     public static void main(String[] args) throws CompressorException, ArchiveException, IOException {
 	PropertyConfigurator.configure(args[0]);
-	File request = new File("/Users/eichmann/downloads/ckb");
+//	File request = new File("/Users/eichmann/downloads/ckb");
+	File request = new File("/Volumes/Pegasus3/LD4L/vde/ckb");
 	if (request.isDirectory()) {
 	    for (File file : request.listFiles()) {
 		processFile(file);
@@ -49,7 +50,7 @@ public class SHAREunpack {
 	logger.info("processing " + file.getName() + "...");
 	File target = file.getName().endsWith("tgz") ? new File(file.getParent() + "/" + file.getName().replace(".tgz", ".nq"))
 		: new File(file.getParent() + "/" + file.getName().replace(".tar.gz", ".nq"));
-//	FileWriter writer = new FileWriter(target);
+	FileWriter writer = new FileWriter(target);
 	InputStream is = new FileInputStream(file);
 	CompressorInputStream in = new CompressorStreamFactory().createCompressorInputStream("gz", is);
 
@@ -60,10 +61,10 @@ public class SHAREunpack {
 	    String buffer = null;
 	    Model model = ModelFactory.createDefaultModel();
 	    while ((buffer = reader.readLine()) != null) {
-		// writer.write(rewrite(buffer) + "\n");
 		logger.debug("\tquad: " + buffer);
 		try {
 		    RDFDataMgr.read(model,new ByteArrayInputStream(buffer.getBytes()), RDFFormat.NQUADS.getLang());
+		    writer.write(buffer + "\n");
 		} catch (RiotException e) {
 		    logger.error("entry: " + entry.getName());
 		    logger.error("error parsing: " + buffer);
@@ -72,7 +73,7 @@ public class SHAREunpack {
 	    entry = (TarArchiveEntry) tin.getNextEntry();
 	}
 	is.close();
-//	writer.close();
+	writer.close();
     }
 	
      static void rewriteMain(String[] args) throws CompressorException, ArchiveException, IOException {
