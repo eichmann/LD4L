@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.io.StringReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,11 +33,12 @@ import org.apache.log4j.PropertyConfigurator;
 
 public class SHAREunpack {
 	static Logger logger = Logger.getLogger(SHAREunpack.class);
+	static PrintStream printstream = null;
 
     public static void main(String[] args) throws CompressorException, ArchiveException, IOException {
 	PropertyConfigurator.configure(args[0]);
-//	File request = new File("/Users/eichmann/downloads/ckb");
-	File request = new File("/Volumes/Pegasus3/LD4L/vde/ckb");
+	File request = new File(args[1]);
+//	File request = new File("/Volumes/Pegasus3/LD4L/vde/ckb");
 	if (request.isDirectory()) {
 	    for (File file : request.listFiles()) {
 		processFile(file);
@@ -51,6 +53,7 @@ public class SHAREunpack {
 	File target = file.getName().endsWith("tgz") ? new File(file.getParent() + "/" + file.getName().replace(".tgz", ".nq"))
 		: new File(file.getParent() + "/" + file.getName().replace(".tar.gz", ".nq"));
 	FileWriter writer = new FileWriter(target);
+	printstream = new PrintStream(target.getPath().replace(".nq", ".err"));
 	InputStream is = new FileInputStream(file);
 	CompressorInputStream in = new CompressorStreamFactory().createCompressorInputStream("gz", is);
 
@@ -68,12 +71,14 @@ public class SHAREunpack {
 		} catch (RiotException e) {
 		    logger.error("entry: " + entry.getName());
 		    logger.error("error parsing: " + buffer);
+		    printstream.println(entry.getName() + " : " + buffer);
 		}
 	    }
 	    entry = (TarArchiveEntry) tin.getNextEntry();
 	}
 	is.close();
 	writer.close();
+	printstream.close();
     }
 	
      static void rewriteMain(String[] args) throws CompressorException, ArchiveException, IOException {
