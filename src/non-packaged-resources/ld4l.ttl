@@ -36,6 +36,7 @@
      <#agrovoc>
      <#wikidata>
      <#mesh>
+     <#share_vde_frick>
    ) .
 
 ########################
@@ -207,6 +208,12 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     fuseki:dataset           <#meshTDB> ;
     .
 
+<#share_vde_frick>  rdf:type fuseki:Service ;
+    fuseki:name              "share_vde_frick" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#share_vde_frickTDB> ;
+    .
+
 <#cornellTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LD4L/triplestores/cornell" ;
@@ -341,3 +348,9 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/MeSH" ;
     .
+
+ <#share_vde_frickTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/share_vde/frick" ;
+    .
+    
