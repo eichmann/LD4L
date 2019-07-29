@@ -100,15 +100,9 @@ public class Indexer {
 	} else if (args.length == 1 && args[0].equals("mesh")) {
 	    tripleStore = dataPath + "MeSH";
 	    endpoint = "http://services.ld4l.org/fuseki/mesh/sparql";
-	} else if (args.length > 1 && args[0].equals("stanford_share_vde")) {
-	    tripleStore = "/usr/local/RAID/LD4L/vde/triplestore";
-	    endpoint = "http://services.ld4l.org/fuseki/stanford_share_vde/sparql";
-	} else if (args.length > 1 && args[0].equals("ucsd_share_vde")) {
-	    tripleStore = "/usr/local/RAID/LD4L/vde/ucsd/ucsd_share_vde";
-	    endpoint = "http://services.ld4l.org/fuseki/ucsd_share_vde/sparql";
-	} else if (args.length > 1 && args[0].equals("cornell_share_vde")) {
-	    tripleStore = "/usr/local/RAID/LD4L/vde/cornell/cornell_share_vde";
-	    endpoint = "http://services.ld4l.org/fuseki/cornell_share_vde/sparql";
+	} else if (args.length > 1 && args[0].equals("share_vde")) {
+	    tripleStore = "/usr/local/RAID/LD4L/triplestores/share_vde/" + args[1];
+	    endpoint = "http://services.ld4l.org/fuseki/share_vde_"+args[1]+"/sparql";
 	} else {
 	    tripleStore = dataPath + args[0];
 	    endpoint = "http://services.ld4l.org/fuseki/" + args[0] + "/sparql";
@@ -174,18 +168,12 @@ public class Indexer {
 	    lucenePath = dataPath + "LD4L/lucene/dbpedia/organization";
 	if (args.length > 1 && args[0].equals("dbpedia") && args[1].equals("place"))
 	    lucenePath = dataPath + "LD4L/lucene/dbpedia/place";
-	if (args.length > 1 && args[0].equals("stanford_share_vde") && args[1].equals("work"))
-	    lucenePath = dataPath + "LD4L/lucene/stanford_share_vde/work";
-	if (args.length > 1 && args[0].equals("stanford_share_vde") && args[1].equals("instance"))
-	    lucenePath = dataPath + "LD4L/lucene/stanford_share_vde/instance";
-	if (args.length > 1 && args[0].equals("ucsd_share_vde") && args[1].equals("work"))
-	    lucenePath = dataPath + "LD4L/lucene/ucsd_share_vde/work";
-	if (args.length > 1 && args[0].equals("ucsd_share_vde") && args[1].equals("instance"))
-	    lucenePath = dataPath + "LD4L/lucene/ucsd_share_vde/instance";
-	if (args.length > 1 && args[0].equals("cornell_share_vde") && args[1].equals("work"))
-	    lucenePath = dataPath + "LD4L/lucene/cornell_share_vde/work";
-	if (args.length > 1 && args[0].equals("cornell_share_vde") && args[1].equals("instance"))
-	    lucenePath = dataPath + "LD4L/lucene/cornell_share_vde/instance";
+	if (args.length > 1 && args[0].equals("share_vde") && args[2].equals("work"))
+	    lucenePath = dataPath + "LD4L/lucene/share_vde/" + args[1] + "/work";
+	if (args.length > 1 && args[0].equals("share_vde") && args[2].equals("superwork"))
+	    lucenePath = dataPath + "LD4L/lucene/share_vde/" + args[1] + "/superwork";
+	if (args.length > 1 && args[0].equals("share_vde") && args[2].equals("instance"))
+	    lucenePath = dataPath + "LD4L/lucene/share_vde/" + args[1] + "/instance";
 	if (args.length == 1 && args[0].equals("mesh"))
 	    lucenePath = dataPath + "LD4L/lucene/mesh";
 
@@ -262,17 +250,11 @@ public class Indexer {
 	    indexDBpedia(theWriter, "Organization");
 	if (args.length > 0 && args[0].equals("dbpedia") && args[1].equals("place"))
 	    indexDBpedia(theWriter, "Place");
-	if (args.length > 0 && args[0].equals("stanford_share_vde") && args[1].equals("work"))
+	if (args.length > 0 && args[0].equals("share_vde") && args[2].equals("work"))
 	    indexShareVDE(theWriter, "Work");
-	if (args.length > 0 && args[0].equals("stanford_share_vde") && args[1].equals("instance"))
-	    indexShareVDE(theWriter, "Instance");
-	if (args.length > 0 && args[0].equals("ucsd_share_vde") && args[1].equals("work"))
-	    indexShareVDE(theWriter, "Work");
-	if (args.length > 0 && args[0].equals("ucsd_share_vde") && args[1].equals("instance"))
-	    indexShareVDE(theWriter, "Instance");
-	if (args.length > 0 && args[0].equals("cornell_share_vde") && args[1].equals("work"))
-	    indexShareVDE(theWriter, "Work");
-	if (args.length > 0 && args[0].equals("cornell_share_vde") && args[1].equals("instance"))
+	if (args.length > 0 && args[0].equals("share_vde") && args[2].equals("superwork"))
+	    indexShareVDE(theWriter, "SuperWork");
+	if (args.length > 0 && args[0].equals("hare_vde") && args[2].equals("instance"))
 	    indexShareVDE(theWriter, "Instance");
 	if (args.length > 0 && args[0].equals("mesh"))
 	    indexMeSH(theWriter);
@@ -312,9 +294,11 @@ public class Indexer {
 		"}";
 	ResultSet rs = getResultSet(prefix + query);
 	while (rs.hasNext()) {
+	    count++;
 	    QuerySolution sol = rs.nextSolution();
 	    String uri = sol.get("?s").toString();
-	    logger.info("uri: " + uri);
+	    if (count % 10000 == 0)
+		logger.info("uri: " + uri);
 	    
 	    Document theDocument = new Document();
 	    theDocument.add(new Field("uri", uri, Field.Store.YES, Field.Index.NOT_ANALYZED));
@@ -331,7 +315,8 @@ public class Indexer {
 	    while (ars.hasNext()) {
 		QuerySolution asol = ars.nextSolution();
 		String name = asol.get("?lab").asLiteral().getString();
-		logger.info("\tname: " + name);
+		if (count % 10000 == 0)
+		    logger.info("\tname: " + name);
 		if (first) {
 		    theDocument.add(new Field("name", name, Field.Store.YES, Field.Index.NOT_ANALYZED));
 		    first = false;
@@ -340,7 +325,6 @@ public class Indexer {
 	    }
 
 	    theWriter.addDocument(theDocument);
-	    count++;
 	    if (count % 10000 == 0)
 		logger.info("count: " + count);
 	}
