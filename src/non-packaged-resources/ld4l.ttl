@@ -37,6 +37,10 @@
      <#wikidata>
      <#mesh>
      <#share_vde_frick>
+     <#share_vde_alberta>
+     <#share_vde_duke>
+     <#share_vde_colorado>
+     <#share_vde_cornell>
    ) .
 
 ########################
@@ -214,6 +218,30 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     fuseki:dataset           <#share_vde_frickTDB> ;
     .
 
+<#share_vde_alberta>  rdf:type fuseki:Service ;
+    fuseki:name              "share_vde_alberta" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#share_vde_albertaTDB> ;
+    .
+
+<#share_vde_duke>  rdf:type fuseki:Service ;
+    fuseki:name              "share_vde_duke" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#share_vde_dukeTDB> ;
+    .
+
+<#share_vde_colorado>  rdf:type fuseki:Service ;
+    fuseki:name              "share_vde_colorado" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#share_vde_coloradoTDB> ;
+    .
+
+<#share_vde_cornell>  rdf:type fuseki:Service ;
+    fuseki:name              "share_vde_cornell" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#share_vde_cornellTDB> ;
+    .
+
 <#cornellTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LD4L/triplestores/cornell" ;
@@ -352,5 +380,25 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
  <#share_vde_frickTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LD4L/triplestores/share_vde/frick" ;
+    .
+ 
+ <#share_vde_albertaTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/share_vde/alberta" ;
+    .
+ 
+ <#share_vde_dukeTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/share_vde/duke" ;
+    .
+ 
+ <#share_vde_coloradoTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/share_vde/colorado" ;
+    .
+ 
+ <#share_vde_cornellTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/share_vde/cornell" ;
     .
     

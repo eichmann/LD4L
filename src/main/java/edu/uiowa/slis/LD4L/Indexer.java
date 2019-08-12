@@ -251,11 +251,11 @@ public class Indexer {
 	if (args.length > 0 && args[0].equals("dbpedia") && args[1].equals("place"))
 	    indexDBpedia(theWriter, "Place");
 	if (args.length > 0 && args[0].equals("share_vde") && args[2].equals("work"))
-	    indexShareVDE(theWriter, "Work");
+	    indexShareVDE(theWriter, "http://id.loc.gov/ontologies/bibframe/Work");
 	if (args.length > 0 && args[0].equals("share_vde") && args[2].equals("superwork"))
-	    indexShareVDE(theWriter, "SuperWork");
-	if (args.length > 0 && args[0].equals("hare_vde") && args[2].equals("instance"))
-	    indexShareVDE(theWriter, "Instance");
+	    indexShareVDE(theWriter, "http://share-vde.org/rdfBibframe/SuperWork");
+	if (args.length > 0 && args[0].equals("share_vde") && args[2].equals("instance"))
+	    indexShareVDE(theWriter, "http://id.loc.gov/ontologies/bibframe/Instance");
 	if (args.length > 0 && args[0].equals("mesh"))
 	    indexMeSH(theWriter);
 
@@ -289,7 +289,7 @@ public class Indexer {
 	String query =
 		" SELECT DISTINCT ?s where { "+
 		"  graph ?g { "+
-		"    ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://id.loc.gov/ontologies/bibframe/" + entity + "> . "+
+		"    ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <" + entity + "> . "+
 		"  } "+
 		"}";
 	ResultSet rs = getResultSet(prefix + query);
@@ -314,6 +314,8 @@ public class Indexer {
 	    ResultSet ars = getResultSet(prefix + query1);
 	    while (ars.hasNext()) {
 		QuerySolution asol = ars.nextSolution();
+		if (!asol.get("?lab").isLiteral())
+		    continue;
 		String name = asol.get("?lab").asLiteral().getString();
 		if (count % 10000 == 0)
 		    logger.info("\tname: " + name);
