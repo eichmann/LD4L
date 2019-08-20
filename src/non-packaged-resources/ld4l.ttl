@@ -41,6 +41,12 @@
      <#share_vde_duke>
      <#share_vde_colorado>
      <#share_vde_cornell>
+     <#share_vde_nlm>
+     <#share_vde_northwestern>
+     <#share_vde_ransom>
+     <#share_vde_ucdavis>
+     <#share_vde_ucsd>
+     <#share_vde_uwashington>
    ) .
 
 ########################
@@ -242,6 +248,42 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     fuseki:dataset           <#share_vde_cornellTDB> ;
     .
 
+<#share_vde_nlm>  rdf:type fuseki:Service ;
+    fuseki:name              "share_vde_nlm" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#share_vde_nlmTDB> ;
+    .
+
+<#share_vde_northwestern>  rdf:type fuseki:Service ;
+    fuseki:name              "share_vde_northwestern" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#share_vde_northwesternTDB> ;
+    .
+
+<#share_vde_ransom>  rdf:type fuseki:Service ;
+    fuseki:name              "share_vde_ransom" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#share_vde_ransomTDB> ;
+    .
+
+<#share_vde_ucdavis>  rdf:type fuseki:Service ;
+    fuseki:name              "share_vde_ucdavis" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#share_vde_ucdavisTDB> ;
+    .
+
+<#share_vde_ucsd>  rdf:type fuseki:Service ;
+    fuseki:name              "share_vde_ucsd" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#share_vde_ucsdTDB> ;
+    .
+
+<#share_vde_uwashington>  rdf:type fuseki:Service ;
+    fuseki:name              "share_vde_uwashington" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#share_vde_uwashingtonTDB> ;
+    .
+
 <#cornellTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LD4L/triplestores/cornell" ;
@@ -400,5 +442,35 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
  <#share_vde_cornellTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LD4L/triplestores/share_vde/cornell" ;
+    .
+ 
+ <#share_vde_nlmTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/share_vde/nlm" ;
+    .
+     
+ <#share_vde_northwesternTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/share_vde/northwestern" ;
+    .
+     
+ <#share_vde_ransomTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/share_vde/ransom" ;
+    .
+     
+ <#share_vde_ucdavisTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/share_vde/ucdavis" ;
+    .
+     
+ <#share_vde_ucsdTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/share_vde/ucsd" ;
+    .
+     
+ <#share_vde_uwashingtonTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/share_vde/uwashington" ;
     .
     
