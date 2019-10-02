@@ -103,6 +103,9 @@ public class Indexer {
 	} else if (args.length > 1 && args[0].equals("share_vde")) {
 	    tripleStore = "/usr/local/RAID/LD4L/triplestores/share_vde/" + args[1];
 	    endpoint = "http://services.ld4l.org/fuseki/share_vde_"+args[1]+"/sparql";
+	} else if (args.length > 1 && args[0].equals("rda")) {
+	    tripleStore = "/usr/local/RAID/RDA";
+	    endpoint = "http://services.ld4l.org/fuseki/rda/sparql";
 	} else {
 	    tripleStore = dataPath + args[0];
 	    endpoint = "http://services.ld4l.org/fuseki/" + args[0] + "/sparql";
@@ -176,11 +179,16 @@ public class Indexer {
 	    lucenePath = dataPath + "LD4L/lucene/share_vde/" + args[1] + "/instance";
 	if (args.length == 1 && args[0].equals("mesh"))
 	    lucenePath = dataPath + "LD4L/lucene/mesh";
+	if (args.length == 1 && args[0].equals("rda"))
+	    lucenePath = dataPath + "LD4L/lucene/rda/";
 
 	logger.info("endpoint: " + endpoint);
 	logger.info("triplestore: " + tripleStore);
 	logger.info("lucenePath: " + lucenePath);
-	IndexWriter theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath)), new StandardAnalyzer(org.apache.lucene.util.Version.LUCENE_30), true, IndexWriter.MaxFieldLength.UNLIMITED);
+	IndexWriter theWriter = null;
+	
+	if (!args[0].equals("rda"))
+	    theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath)), new StandardAnalyzer(org.apache.lucene.util.Version.LUCENE_30), true, IndexWriter.MaxFieldLength.UNLIMITED);
 	
 	if (args.length == 1 && args[0].equals("agrovoc"))
 	    indexAgrovoc(theWriter);
@@ -258,10 +266,14 @@ public class Indexer {
 	    indexShareVDE(theWriter, "http://id.loc.gov/ontologies/bibframe/Instance");
 	if (args.length > 0 && args[0].equals("mesh"))
 	    indexMeSH(theWriter);
+	if (args.length > 0 && args[0].equals("rda"))
+	    indexRDA();
 
-	logger.info("optimizing index...");
-	theWriter.optimize();
-	theWriter.close();
+	if (!args[0].equals("rda")) {
+	    logger.info("optimizing index...");
+	    theWriter.optimize();
+	    theWriter.close();
+	}
     }
     
     static String retokenizeString(String originalQuery, boolean useDateHack) {
@@ -284,6 +296,78 @@ public class Indexer {
 	return buffer.toString().trim();
     }
 
+    static void indexRDA() throws CorruptIndexException, IOException {
+	String[] elements = {"AspectRatio", "CollTitle", "IllusContent", "ModeIssue", "MusNotation", "RDACarrierEU", "RDACarrierType", "RDACartoDT", "RDAColourContent", "RDAContentType", "RDAGeneration",
+		             "RDAMaterial", "RDAMediaType", "RDAPolarity", "RDARecordingSources", "RDAReductionRatio", "RDARegionalEncoding", "RDATerms", "RDATypeOfBinding", "RDAbaseMaterial", "RDAproductionMethod",
+		             "TacNotation", "bookFormat", "broadcastStand", "configPlayback", "fileType", "fontSize", "formatNoteMus", "frequency", "gender", "groovePitch", "grooveWidth", "layout", "noteMove", "presFormat",
+		             "prodTactile", "recMedium", "rofch", "rofchrda", "rofem", "rofer", "rofet", "roffgrda", "rofhf", "rofid", "rofim", "rofin", "rofit", "rofitrda", "rofrm", "rofrr", "rofrt", "rofsf", "rofsfrda",
+		             "rofsm", "scale", "soundCont", "specPlayback", "statIdentification", "trackConfig", "typeRec", "videoFormat"
+		             };
+	
+	for (String element : elements) {
+	    IndexWriter theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath + element)), new StandardAnalyzer(org.apache.lucene.util.Version.LUCENE_30), true, IndexWriter.MaxFieldLength.UNLIMITED);
+	    
+	    indexRDA(theWriter, element);
+	    
+	    logger.info("optimizing index...");
+	    theWriter.optimize();
+	    theWriter.close();
+	}
+    }
+
+    static void indexRDA(IndexWriter theWriter, String entity) throws CorruptIndexException, IOException {
+	logger.info("indexing " + entity + "...");
+	int count = 0;
+	String query =
+		" SELECT DISTINCT ?s ?sl where { "
+		+ "  ?s <http://www.w3.org/2004/02/skos/core#inScheme> <http://rdaregistry.info/termList/" + entity + "> . "
+		+ "  ?s <http://www.w3.org/2004/02/skos/core#prefLabel> ?sl . "
+		+ "  FILTER (lang(?sl) = 'en') "
+		+ "}";
+	ResultSet rs = getResultSet(prefix + query);
+	while (rs.hasNext()) {
+	    count++;
+	    QuerySolution sol = rs.nextSolution();
+	    String uri = sol.get("?s").toString();
+	    String label = sol.get("?sl").asLiteral().getString();
+	    logger.info("\turi: " + uri + "\tlabel: " + label);
+	    
+	    Document theDocument = new Document();
+	    theDocument.add(new Field("uri", uri, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("name", label, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("content", label, Field.Store.NO, Field.Index.ANALYZED));
+	    
+	    String query1 = 
+		  "SELECT DISTINCT ?lab WHERE { "
+		+ "<" + uri + "> <http://www.w3.org/2004/02/skos/core#prefLabel> ?lab . "
+		+ "}";
+	    ResultSet ars = getResultSet(prefix + query1);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String name = asol.get("?lab").asLiteral().getString();
+		logger.info("\t\tprefLabel: " + name);
+		theDocument.add(new Field("content", name, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+
+	    String query2 = 
+		  "SELECT DISTINCT ?lab WHERE { "
+		+ "<" + uri + "> <http://www.w3.org/2004/02/skos/core#altLabel> ?lab . "
+		+ "}";
+	    ars = getResultSet(prefix + query2);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String name = asol.get("?lab").asLiteral().getString();
+		logger.info("\t\taltLabel: " + name);
+		theDocument.add(new Field("content", name, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+
+	    theWriter.addDocument(theDocument);
+	    if (count % 10000 == 0)
+		logger.info("count: " + count);
+	}
+	logger.info("total " + entity + " count: " + count);
+    }
+    
     static void indexShareVDE(IndexWriter theWriter, String entity) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
