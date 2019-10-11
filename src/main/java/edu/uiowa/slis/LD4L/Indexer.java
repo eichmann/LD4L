@@ -30,7 +30,7 @@ import org.apache.lucene.store.LockObtainFailedException;
 public class Indexer {
     protected static Logger logger = Logger.getLogger(Indexer.class);
     
-    static boolean useSPARQL = false;
+    static boolean useSPARQL = true;
     static Dataset dataset = null;
     static String tripleStore = null;
     static String endpoint = null;
@@ -923,12 +923,21 @@ public class Indexer {
     // _:bnode427471899577210033 <http://id.loc.gov/ontologies/RecordInfo#recordStatus> "new" .
     static void indexLoCGenre(IndexWriter theWriter, boolean deprecated) throws CorruptIndexException, IOException {
 	int count = 0;
-	String query =
-		"SELECT ?uri ?subject ?status WHERE { "
-		+ "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?subject . "
-		+ "?uri <http://www.loc.gov/mads/rdf/v1#adminMetadata> ?stat . "
-		+ "?stat <http://id.loc.gov/ontologies/RecordInfo#recordStatus> ?status . "
-    		+ "} ";
+	String query = deprecated ?
+		    "SELECT ?uri ?subject WHERE { "
+		    + "?uri <http://www.loc.gov/mads/rdf/v1#variantLabel> ?subject . "
+		    + "?uri <http://www.loc.gov/mads/rdf/v1#adminMetadata> ?stat . "
+		    + "?stat <http://id.loc.gov/ontologies/RecordInfo#recordStatus> \"deprecated\" . "
+		    + "} "
+		:
+		    "SELECT ?uri ?subject WHERE { "
+		    + "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?subject . "
+//		    + "FILTER NOT EXISTS {"
+//		    + "	  ?uri <http://www.loc.gov/mads/rdf/v1#adminMetadata> ?stat . "
+//		    + "   ?stat <http://id.loc.gov/ontologies/RecordInfo#recordStatus> 'deprecated' . "
+//		    + "   }"
+		    + "} "
+		;
 	logger.info("triplestore: " + tripleStore);
 	logger.info("query: " + query);
 	ResultSet rs = getResultSet(query);
@@ -936,12 +945,7 @@ public class Indexer {
 	    QuerySolution sol = rs.nextSolution();
 	    String URI = sol.get("?uri").toString();
 	    String subject = sol.get("?subject").asLiteral().getString();
-	    String status = sol.get("?status").asLiteral().getString();
-	    
-	    if (!URI.startsWith("http:") || (deprecated && !status.equals("deprecated")) || (!deprecated && status.equals("deprecated")))
-		continue;
-	    
-	    logger.info("uri: " + URI + "\tsubject: " + subject + "\tstatus: " + status);
+	    logger.info("uri: " + URI + "\tsubject: " + subject);
 	    
 	    Document theDocument = new Document();
 	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
