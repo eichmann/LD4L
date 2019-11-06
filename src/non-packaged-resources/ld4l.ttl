@@ -57,6 +57,7 @@
     <#share_vde_tamu>
     <#share_vde_upenn>
     <#share_vde_yale>
+    <#share_ckb>
    ) .
 
 ########################
@@ -354,6 +355,12 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     fuseki:dataset           <#share_vde_yaleTDB> ;
     .
 
+<#share_ckb>  rdf:type fuseki:Service ;
+    fuseki:name              "share_ckb" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#share_ckbTDB> ;
+    .
+
 <#cornellTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LD4L/triplestores/cornell" ;
@@ -592,5 +599,10 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
  <#share_vde_yaleTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LD4L/triplestores/share_vde/yale" ;
+    .
+     
+ <#share_ckbTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/share_vde/ckb" ;
     .
     
