@@ -30,7 +30,7 @@ import org.apache.lucene.store.LockObtainFailedException;
 public class Indexer {
     protected static Logger logger = Logger.getLogger(Indexer.class);
     
-    static boolean useSPARQL = true;
+    static boolean useSPARQL = false;
     static Dataset dataset = null;
     static String tripleStore = null;
     static String endpoint = null;
@@ -265,18 +265,20 @@ public class Indexer {
 	    indexDBpedia(theWriter, "Place");
 	if (args.length > 0 && args[0].equals("share_vde") && args[1].equals("merge"))
 	    mergeShareVDE();
-	if (args.length > 0 && args[0].equals("share_vde") && args[2].equals("work"))
-	    indexShareVDE(theWriter, args[1], "http://id.loc.gov/ontologies/bibframe/Work");
-	if (args.length > 0 && args[0].equals("share_vde") && args[2].equals("superwork"))
-	    indexShareVDE(theWriter, args[1], "http://share-vde.org/rdfBibframe/SuperWork");
-	if (args.length > 0 && args[0].equals("share_vde") && args[2].equals("instance"))
-	    indexShareVDE(theWriter, args[1], "http://id.loc.gov/ontologies/bibframe/Instance");
+	else {
+	    if (args.length > 0 && args[0].equals("share_vde") && args[2].equals("work"))
+		indexShareVDE(theWriter, args[1], "http://id.loc.gov/ontologies/bibframe/Work");
+	    if (args.length > 0 && args[0].equals("share_vde") && args[2].equals("superwork"))
+		indexShareVDE(theWriter, args[1], "http://share-vde.org/rdfBibframe/SuperWork");
+	    if (args.length > 0 && args[0].equals("share_vde") && args[2].equals("instance"))
+		indexShareVDE(theWriter, args[1], "http://id.loc.gov/ontologies/bibframe/Instance");
+	}
 	if (args.length > 0 && args[0].equals("mesh"))
 	    indexMeSH(theWriter);
 	if (args.length > 0 && args[0].equals("rda"))
 	    indexRDA();
 
-	if (!args[0].equals("rda")) {
+	if (theWriter != null && !args[0].equals("rda")) {
 	    logger.info("optimizing index...");
 	    theWriter.optimize();
 	    theWriter.close();
@@ -425,7 +427,7 @@ public class Indexer {
 	logger.info("total " + entity + " count: " + count);
     }
     
-    static void mergeShareVDE() {
+    static void mergeShareVDE() throws CorruptIndexException, IOException {
 	String[] types = { "Work", "SuperWork", "Instance" };
 	String[] sites = {
 //		"ckb",
@@ -451,9 +453,14 @@ public class Indexer {
 	};
 	
 	for (String type : types) {
+	    Vector<String> requests = new Vector<String>();
 	    for (String site : sites) {
-		logger.info("type: " + type + "\tsite: " + site);
+		lucenePath = dataPath + "LD4L/lucene/share_vde/" + site + "/" + type;
+		logger.info("type: " + type + "\tsite: " + site + "\trequest: " + lucenePath);
+		requests.add(lucenePath);
 	    }
+	    logger.info("request vector: " + requests);
+	    mergeIndices(requests, dataPath + "LD4L/lucene/share_vde/merged/" + type);
 	}
     }
     
