@@ -100,6 +100,8 @@ public class Indexer {
 	} else if (args.length == 1 && args[0].equals("mesh")) {
 	    tripleStore = dataPath + "MeSH";
 	    endpoint = "http://services.ld4l.org/fuseki/mesh/sparql";
+	} else if (args.length > 1 && args[0].equals("share_vde") && args[1].equals("merge")) {
+	    // data source set in merge method
 	} else if (args.length > 1 && args[0].equals("share_vde")) {
 	    tripleStore = "/usr/local/RAID/LD4L/triplestores/share_vde/" + args[1];
 	    endpoint = "http://services.ld4l.org/fuseki/share_vde_"+args[1]+"/sparql";
@@ -171,11 +173,14 @@ public class Indexer {
 	    lucenePath = dataPath + "LD4L/lucene/dbpedia/organization";
 	if (args.length > 1 && args[0].equals("dbpedia") && args[1].equals("place"))
 	    lucenePath = dataPath + "LD4L/lucene/dbpedia/place";
-	if (args.length > 1 && args[0].equals("share_vde") && args[2].equals("work"))
+	if (args.length > 1 && args[0].equals("share_vde") && args[1].equals("merge")) {
+	    // lucene path set by merge method
+	}
+	if (args.length > 2 && args[0].equals("share_vde") && args[2].equals("work"))
 	    lucenePath = dataPath + "LD4L/lucene/share_vde/" + args[1] + "/work";
-	if (args.length > 1 && args[0].equals("share_vde") && args[2].equals("superwork"))
+	if (args.length > 2 && args[0].equals("share_vde") && args[2].equals("superwork"))
 	    lucenePath = dataPath + "LD4L/lucene/share_vde/" + args[1] + "/superwork";
-	if (args.length > 1 && args[0].equals("share_vde") && args[2].equals("instance"))
+	if (args.length > 2 && args[0].equals("share_vde") && args[2].equals("instance"))
 	    lucenePath = dataPath + "LD4L/lucene/share_vde/" + args[1] + "/instance";
 	if (args.length == 1 && args[0].equals("mesh"))
 	    lucenePath = dataPath + "LD4L/lucene/mesh";
@@ -187,7 +192,7 @@ public class Indexer {
 	logger.info("lucenePath: " + lucenePath);
 	IndexWriter theWriter = null;
 	
-	if (!args[0].equals("rda"))
+	if (endpoint != null & !args[0].equals("rda"))
 	    theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath)), new StandardAnalyzer(org.apache.lucene.util.Version.LUCENE_30), true, IndexWriter.MaxFieldLength.UNLIMITED);
 	
 	if (args.length == 1 && args[0].equals("agrovoc"))
@@ -258,12 +263,14 @@ public class Indexer {
 	    indexDBpedia(theWriter, "Organization");
 	if (args.length > 0 && args[0].equals("dbpedia") && args[1].equals("place"))
 	    indexDBpedia(theWriter, "Place");
+	if (args.length > 0 && args[0].equals("share_vde") && args[1].equals("merge"))
+	    mergeShareVDE();
 	if (args.length > 0 && args[0].equals("share_vde") && args[2].equals("work"))
-	    indexShareVDE(theWriter, "http://id.loc.gov/ontologies/bibframe/Work");
+	    indexShareVDE(theWriter, args[1], "http://id.loc.gov/ontologies/bibframe/Work");
 	if (args.length > 0 && args[0].equals("share_vde") && args[2].equals("superwork"))
-	    indexShareVDE(theWriter, "http://share-vde.org/rdfBibframe/SuperWork");
+	    indexShareVDE(theWriter, args[1], "http://share-vde.org/rdfBibframe/SuperWork");
 	if (args.length > 0 && args[0].equals("share_vde") && args[2].equals("instance"))
-	    indexShareVDE(theWriter, "http://id.loc.gov/ontologies/bibframe/Instance");
+	    indexShareVDE(theWriter, args[1], "http://id.loc.gov/ontologies/bibframe/Instance");
 	if (args.length > 0 && args[0].equals("mesh"))
 	    indexMeSH(theWriter);
 	if (args.length > 0 && args[0].equals("rda"))
@@ -368,7 +375,7 @@ public class Indexer {
 	logger.info("total " + entity + " count: " + count);
     }
     
-    static void indexShareVDE(IndexWriter theWriter, String entity) throws CorruptIndexException, IOException {
+    static void indexShareVDE(IndexWriter theWriter, String site, String entity) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
 		" SELECT DISTINCT ?s where { "+
@@ -386,6 +393,7 @@ public class Indexer {
 	    
 	    Document theDocument = new Document();
 	    theDocument.add(new Field("uri", uri, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("site", site, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    
 	    boolean first = true;
 	    String query1 = 
@@ -415,6 +423,38 @@ public class Indexer {
 		logger.info("count: " + count);
 	}
 	logger.info("total " + entity + " count: " + count);
+    }
+    
+    static void mergeShareVDE() {
+	String[] types = { "Work", "SuperWork", "Instance" };
+	String[] sites = {
+//		"ckb",
+		"alberta",
+		"chicago",
+		"colorado",
+		"cornell",
+		"duke",
+		"frick",
+		"michigan",
+		"minnesota",
+		"nlm",
+		"northwestern",
+		"princeton",
+		"ransom",
+		"stanford",
+		"tamu",
+		"ucdavis",
+		"ucsd",
+		"upenn",
+		"uwashington",
+		"yale"
+	};
+	
+	for (String type : types) {
+	    for (String site : sites) {
+		logger.info("type: " + type + "\tsite: " + site);
+	    }
+	}
     }
     
     static void indexDBpedia(IndexWriter theWriter, String entity) throws CorruptIndexException, IOException {
