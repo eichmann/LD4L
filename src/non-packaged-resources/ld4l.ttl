@@ -58,6 +58,8 @@
     <#share_vde_upenn>
     <#share_vde_yale>
     <#share_ckb>
+    <#CERL>
+    <#Ligatus>
    ) .
 
 ########################
@@ -361,6 +363,18 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     fuseki:dataset           <#share_ckbTDB> ;
     .
 
+<#CERL>  rdf:type fuseki:Service ;
+    fuseki:name              "CERL" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#CERLTDB> ;
+    .
+
+<#Ligatus>  rdf:type fuseki:Service ;
+    fuseki:name              "Ligatus" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#LigatusTDB> ;
+    .
+
 <#cornellTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LD4L/triplestores/cornell" ;
@@ -604,5 +618,15 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
  <#share_ckbTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LD4L/triplestores/share_vde/ckb" ;
+    .
+     
+ <#CERLTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/CERL" ;
+    .
+         
+ <#LigatusTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/Ligatus" ;
     .
     
