@@ -108,6 +108,9 @@ public class Indexer {
 	} else if (args.length > 1 && args[0].equals("rda")) {
 	    tripleStore = "/usr/local/RAID/RDA";
 	    endpoint = "http://services.ld4l.org/fuseki/rda/sparql";
+	} else if (args.length > 1 && args[0].equals("cerl")) {
+	    tripleStore = "/usr/local/RAID/LD4L/triplestores/CERL";
+	    endpoint = "http://services.ld4l.org/fuseki/cerl/sparql";
 	} else {
 	    tripleStore = dataPath + args[0];
 	    endpoint = "http://services.ld4l.org/fuseki/" + args[0] + "/sparql";
@@ -186,6 +189,12 @@ public class Indexer {
 	    lucenePath = dataPath + "LD4L/lucene/mesh";
 	if (args.length == 1 && args[0].equals("rda"))
 	    lucenePath = dataPath + "LD4L/lucene/rda/";
+	if (args.length > 1 && args[0].equals("cerl") && args[1].equals("corporate"))
+	    lucenePath = dataPath + "LD4L/lucene/cerl/corporate/";
+	if (args.length > 1 && args[0].equals("cerl") && args[1].equals("imprint"))
+	    lucenePath = dataPath + "LD4L/lucene/cerl/imprint/";
+	if (args.length > 1 && args[0].equals("cerl") && args[1].equals("person"))
+	    lucenePath = dataPath + "LD4L/lucene/cerl/person/";
 
 	logger.info("endpoint: " + endpoint);
 	logger.info("triplestore: " + tripleStore);
@@ -277,6 +286,12 @@ public class Indexer {
 	    indexMeSH(theWriter);
 	if (args.length > 0 && args[0].equals("rda"))
 	    indexRDA();
+	if (args.length > 0 && args[0].equals("cerl") && args[1].equals("corporate"))
+	    indexCERLcorporate(theWriter);
+	if (args.length > 0 && args[0].equals("cerl") && args[1].equals("imprint"))
+	    indexCERLimprint(theWriter);
+	if (args.length > 0 && args[0].equals("cerl") && args[1].equals("person"))
+	    indexCERLperson(theWriter);
 
 	if (theWriter != null && !args[0].equals("rda")) {
 	    logger.info("optimizing index...");
@@ -305,6 +320,135 @@ public class Indexer {
 	return buffer.toString().trim();
     }
 
+    static void indexCERLcorporate(IndexWriter theWriter) throws CorruptIndexException, IOException {
+	int count = 0;
+	String query =
+		" SELECT DISTINCT ?s ?lab where { "+
+		"  ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdvocab.info/uri/schema/FRBRentitiesRDA/CorporateBody> . "+
+		"  ?s <http://rdvocab.info/ElementsGr2/nameOfTheCorporateBody> ?lab . "+
+		"}";
+	ResultSet rs = getResultSet(prefix + query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String uri = sol.get("?s").toString();
+	    if (sol.get("?lab") == null) {
+		logger.error("missing label for uri: " + uri);
+		continue;
+	    }
+	    String label = sol.get("?lab").asLiteral().getString();
+	    logger.info("uri: " + uri + "\tlabel: " + label);
+	    
+	    Document theDocument = new Document();
+	    theDocument.add(new Field("uri", uri, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("name", label, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("content", label, Field.Store.NO, Field.Index.ANALYZED));
+
+	    String query2 = 
+		  "SELECT DISTINCT ?altlabel WHERE { "
+			  + "<" + uri + "> <http://rdvocab.info/ElementsGr2/variantNameForTheCorporateBody> ?altlabel . "
+		+ "}";
+	    ResultSet ars = getResultSet(prefix + query2);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String altlabel = asol.get("?altlabel").asLiteral().getString();
+		logger.info("\talt label: " + altlabel);
+		theDocument.add(new Field("content", altlabel, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    theWriter.addDocument(theDocument);
+	    count++;
+	    if (count % 10000 == 0)
+		logger.info("count: " + count);
+	}
+	logger.info("total count: " + count);
+    }
+    
+    static void indexCERLimprint(IndexWriter theWriter) throws CorruptIndexException, IOException {
+	int count = 0;
+	String query =
+		" SELECT DISTINCT ?s ?lab where { "+
+		"  ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.cerl.org/namespaces/thesaurus/ImprintName> . "+
+		"  ?s <http://www.cerl.org/namespaces/thesaurus/imprintName> ?lab . "+
+		"}";
+	ResultSet rs = getResultSet(prefix + query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String uri = sol.get("?s").toString();
+	    if (sol.get("?lab") == null) {
+		logger.error("missing label for uri: " + uri);
+		continue;
+	    }
+	    String label = sol.get("?lab").asLiteral().getString();
+	    logger.info("uri: " + uri + "\tlabel: " + label);
+	    
+	    Document theDocument = new Document();
+	    theDocument.add(new Field("uri", uri, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("name", label, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("content", label, Field.Store.NO, Field.Index.ANALYZED));
+
+	    String query2 = 
+		  "SELECT DISTINCT ?altlabel WHERE { "
+			  + "<" + uri + "> <http://www.cerl.org/namespaces/thesaurus/variantImprintName> ?altlabel . "
+		+ "}";
+	    ResultSet ars = getResultSet(prefix + query2);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String altlabel = asol.get("?altlabel").asLiteral().getString();
+		logger.info("\talt label: " + altlabel);
+		theDocument.add(new Field("content", altlabel, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    theWriter.addDocument(theDocument);
+	    count++;
+	    if (count % 10000 == 0)
+		logger.info("count: " + count);
+	}
+	logger.info("total count: " + count);
+    }
+    
+    static void indexCERLperson(IndexWriter theWriter) throws CorruptIndexException, IOException {
+	int count = 0;
+	String query =
+		" SELECT DISTINCT ?s ?lab where { "+
+		"  ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdvocab.info/uri/schema/FRBRentitiesRDA/Person> . "+
+		"  ?s <http://rdvocab.info/ElementsGr2/nameOfThePerson> ?lab . "+
+		"}";
+	ResultSet rs = getResultSet(prefix + query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String uri = sol.get("?s").toString();
+	    if (sol.get("?lab") == null) {
+		logger.error("missing label for uri: " + uri);
+		continue;
+	    }
+	    String label = sol.get("?lab").asLiteral().getString();
+	    logger.info("uri: " + uri + "\tlabel: " + label);
+	    
+	    Document theDocument = new Document();
+	    theDocument.add(new Field("uri", uri, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("name", label, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("content", label, Field.Store.NO, Field.Index.ANALYZED));
+
+	    String query2 = 
+		  "SELECT DISTINCT ?altlabel WHERE { "
+			  + "<" + uri + "> <http://rdvocab.info/ElementsGr2/variantNameForThePerson> ?altlabel . "
+		+ "}";
+	    ResultSet ars = getResultSet(prefix + query2);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String altlabel = asol.get("?altlabel").asLiteral().getString();
+		logger.info("\talt label: " + altlabel);
+		theDocument.add(new Field("content", altlabel, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    theWriter.addDocument(theDocument);
+	    count++;
+	    if (count % 10000 == 0)
+		logger.info("count: " + count);
+	}
+	logger.info("total count: " + count);
+    }
+    
     static void indexRDA() throws CorruptIndexException, IOException {
 	String[] elements = {"AspectRatio", "CollTitle", "IllusContent", "ModeIssue", "MusNotation", "RDACarrierEU", "RDACarrierType", "RDACartoDT", "RDAColourContent", "RDAContentType", "RDAGeneration",
 		             "RDAMaterial", "RDAMediaType", "RDAPolarity", "RDARecordingSources", "RDAReductionRatio", "RDARegionalEncoding", "RDATerms", "RDATypeOfBinding", "RDAbaseMaterial", "RDAproductionMethod",
