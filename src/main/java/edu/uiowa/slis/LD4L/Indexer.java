@@ -740,13 +740,18 @@ public class Indexer {
 	logger.info("total " + entity + " count: " + count);
     }
     
-    static void indexMeSH(IndexWriter theWriter) throws CorruptIndexException, IOException {
+    static void indexMeSH(IndexWriter theWriter) throws CorruptIndexException, IOException, InterruptedException {
+	indexMeSH(theWriter, "TopicalDescriptor");
+	indexMeSH(theWriter, "GeographicalDescriptor");
+	indexMeSH(theWriter, "PublicationType");
+    }
+    
+    static void indexMeSH(IndexWriter theWriter, String vocab) throws CorruptIndexException, IOException, InterruptedException {
 	int count = 0;
 	String query =
 		" SELECT DISTINCT ?s ?lab ?def where { "+
-		"  ?s rdf:type <http://id.nlm.nih.gov/mesh/vocab#Term> . "+
-		"  ?s <http://id.nlm.nih.gov/mesh/vocab#prefLabel> ?lab . "+
-		"  OPTIONAL { ?s skos:definition ?def } "+
+		"  ?s rdf:type <http://id.nlm.nih.gov/mesh/vocab#" + vocab + "> . "+
+		"  ?s <http://www.w3.org/2000/01/rdf-schema#label> ?lab . "+
 		"}";
 	ResultSet rs = getResultSet(prefix + query);
 	while (rs.hasNext()) {
@@ -757,40 +762,151 @@ public class Indexer {
 		continue;
 	    }
 	    String label = sol.get("?lab").asLiteral().getString();
-	    String definition = sol.get("?def") == null ? null : sol.get("?def").asLiteral().getString();
-	    logger.info("uri: " + uri + "\tlabel: " + label + "\tdefinition: " + definition);
+	    logger.info("uri: " + uri + "\tlabel: " + label);
 	    
 	    Document theDocument = new Document();
 	    theDocument.add(new Field("uri", uri, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("name", label, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("content", label, Field.Store.NO, Field.Index.ANALYZED));
-	    if (definition != null)
-		theDocument.add(new Field("content", definition, Field.Store.NO, Field.Index.ANALYZED));
 
 	    String query1 = 
-		  "SELECT DISTINCT ?cui WHERE { "
-			  + "<" + uri + "> umls:cui ?cui . "
+		  "SELECT DISTINCT ?concept WHERE { "
+			  + "<" + uri + "> <http://id.nlm.nih.gov/mesh/vocab#concept> ?c . "
+			  + "?c <http://www.w3.org/2000/01/rdf-schema#label> ?concept . "
 		+ "}";
 	    ResultSet ars = getResultSet(prefix + query1);
 	    while (ars.hasNext()) {
 		QuerySolution asol = ars.nextSolution();
-		String cui = asol.get("?cui").asLiteral().getString();
-		logger.info("\tcui: " + cui);
-		theDocument.add(new Field("content", cui, Field.Store.NO, Field.Index.ANALYZED));
+		String concept = asol.get("?concept").asLiteral().getString();
+		logger.info("\tconcept: " + concept);
+		theDocument.add(new Field("content", concept, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    query1 = 
+		  "SELECT DISTINCT ?concept WHERE { "
+			  + "<" + uri + "> <http://id.nlm.nih.gov/mesh/vocab#preferredConcept> ?c . "
+			  + "?c <http://www.w3.org/2000/01/rdf-schema#label> ?concept . "
+		+ "}";
+	    ars = getResultSet(prefix + query1);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String concept = asol.get("?concept").asLiteral().getString();
+		logger.info("\tpreferred concept: " + concept);
+		theDocument.add(new Field("content", concept, Field.Store.NO, Field.Index.ANALYZED));
 	    }
 	    
 	    String query2 = 
-		  "SELECT DISTINCT ?altlabel WHERE { "
-			  + "<" + uri + "> skos:altLabel ?altlabel . "
+		  "SELECT DISTINCT ?concept WHERE { "
+			  + "<" + uri + "> <http://id.nlm.nih.gov/mesh/vocab#concept> ?c . "
+			  + "?bc <http://id.nlm.nih.gov/mesh/vocab#broaderConcept> ?c . "
+			  + "?bc <http://www.w3.org/2000/01/rdf-schema#label> ?concept . "
 		+ "}";
 	    ars = getResultSet(prefix + query2);
 	    while (ars.hasNext()) {
 		QuerySolution asol = ars.nextSolution();
-		String altlabel = asol.get("?altlabel").asLiteral().getString();
-		logger.info("\talt label: " + altlabel);
-		theDocument.add(new Field("content", altlabel, Field.Store.NO, Field.Index.ANALYZED));
+		String concept = asol.get("?concept").asLiteral().getString();
+		logger.info("\tnarrower concept: " + concept);
+		theDocument.add(new Field("content", concept, Field.Store.NO, Field.Index.ANALYZED));
 	    }
 	    
+	    query2 = 
+		  "SELECT DISTINCT ?concept WHERE { "
+			  + "<" + uri + "> <http://id.nlm.nih.gov/mesh/vocab#preferredConcept> ?c . "
+			  + "?bc <http://id.nlm.nih.gov/mesh/vocab#broaderConcept> ?c . "
+			  + "?bc <http://www.w3.org/2000/01/rdf-schema#label> ?concept . "
+		+ "}";
+	    ars = getResultSet(prefix + query2);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String concept = asol.get("?concept").asLiteral().getString();
+		logger.info("\tpreferred narrower concept: " + concept);
+		theDocument.add(new Field("content", concept, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    String query3 = 
+		  "SELECT DISTINCT ?concept WHERE { "
+			  + "<" + uri + "> <http://id.nlm.nih.gov/mesh/vocab#concept> ?c . "
+			  + "?nc <http://id.nlm.nih.gov/mesh/vocab#narrowerConcept> ?c . "
+			  + "?nc <http://www.w3.org/2000/01/rdf-schema#label> ?concept . "
+		+ "}";
+	    ars = getResultSet(prefix + query3);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String concept = asol.get("?concept").asLiteral().getString();
+		logger.info("\tbroader concept: " + concept);
+		theDocument.add(new Field("content", concept, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    query3 = 
+		  "SELECT DISTINCT ?concept WHERE { "
+			  + "<" + uri + "> <http://id.nlm.nih.gov/mesh/vocab#preferredConcept> ?c . "
+			  + "?nc <http://id.nlm.nih.gov/mesh/vocab#narrowerConcept> ?c . "
+			  + "?nc <http://www.w3.org/2000/01/rdf-schema#label> ?concept . "
+		+ "}";
+	    ars = getResultSet(prefix + query3);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String concept = asol.get("?concept").asLiteral().getString();
+		logger.info("\tpreferred broader concept: " + concept);
+		theDocument.add(new Field("content", concept, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    String query4 = 
+		  "SELECT DISTINCT ?concept WHERE { "
+			  + "<" + uri + "> <http://id.nlm.nih.gov/mesh/vocab#concept> ?c . "
+			  + "?rc <http://id.nlm.nih.gov/mesh/vocab#relatedConcept> ?c . "
+			  + "?rc <http://www.w3.org/2000/01/rdf-schema#label> ?concept . "
+		+ "}";
+	    ars = getResultSet(prefix + query4);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String concept = asol.get("?concept").asLiteral().getString();
+		logger.info("\trelated concept: " + concept);
+		theDocument.add(new Field("content", concept, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    query4 = 
+		  "SELECT DISTINCT ?concept WHERE { "
+			  + "<" + uri + "> <http://id.nlm.nih.gov/mesh/vocab#preferredConcept> ?c . "
+			  + "?rc <http://id.nlm.nih.gov/mesh/vocab#relatedConcept> ?c . "
+			  + "?rc <http://www.w3.org/2000/01/rdf-schema#label> ?concept . "
+		+ "}";
+	    ars = getResultSet(prefix + query4);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String concept = asol.get("?concept").asLiteral().getString();
+		logger.info("\tpreferred related concept: " + concept);
+		theDocument.add(new Field("content", concept, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    String query5 = 
+		  "SELECT DISTINCT ?concept WHERE { "
+			  + "<" + uri + "> <http://id.nlm.nih.gov/mesh/vocab#useInstead> ?c . "
+			  + "?c <http://www.w3.org/2000/01/rdf-schema#label> ?concept . "
+		+ "}";
+	    ars = getResultSet(prefix + query5);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String concept = asol.get("?concept").asLiteral().getString();
+		logger.info("\tuse instead: " + concept);
+		theDocument.add(new Field("content", concept, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    String query6 = 
+		  "SELECT DISTINCT ?concept WHERE { "
+			  + "?c <http://id.nlm.nih.gov/mesh/vocab#mappedTo> <" + uri + "> . "
+			  + "?c <http://www.w3.org/2000/01/rdf-schema#label> ?concept . "
+		+ "}";
+	    ars = getResultSet(prefix + query6);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String concept = asol.get("?concept").asLiteral().getString();
+		logger.info("\tmapped to: " + concept);
+		theDocument.add(new Field("content", concept, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+	    
+	    theDocument.add(new Field("payload", generatePayload("http://services.ld4l.org/ld4l_services/mesh_lookup.jsp?uri=" + uri), Field.Store.YES, Field.Index.NOT_ANALYZED));
+
 	    theWriter.addDocument(theDocument);
 	    count++;
 	    if (count % 10000 == 0)
