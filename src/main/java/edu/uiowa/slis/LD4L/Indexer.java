@@ -1,7 +1,12 @@
 package edu.uiowa.slis.LD4L;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,7 +57,7 @@ public class Indexer {
 
     
     @SuppressWarnings("deprecation")
-    public static void main(String[] args) throws CorruptIndexException, LockObtainFailedException, IOException {
+    public static void main(String[] args) throws CorruptIndexException, LockObtainFailedException, IOException, InterruptedException {
 	PropertyConfigurator.configure("log4j.info");
 
 	if (args.length == 1 && args[0].equals("agrovoc")) {
@@ -111,6 +116,9 @@ public class Indexer {
 	} else if (args.length > 1 && args[0].equals("cerl")) {
 	    tripleStore = "/usr/local/RAID/LD4L/triplestores/CERL";
 	    endpoint = "http://services.ld4l.org/fuseki/cerl/sparql";
+	} else if (args.length == 1 && args[0].equals("ligatus")) {
+	    tripleStore = "/usr/local/RAID/LD4L/triplestores/Ligatus";
+	    endpoint = "http://services.ld4l.org/fuseki/Ligatus/sparql";
 	} else {
 	    tripleStore = dataPath + args[0];
 	    endpoint = "http://services.ld4l.org/fuseki/" + args[0] + "/sparql";
@@ -195,6 +203,8 @@ public class Indexer {
 	    lucenePath = dataPath + "LD4L/lucene/cerl/imprint/";
 	if (args.length > 1 && args[0].equals("cerl") && args[1].equals("person"))
 	    lucenePath = dataPath + "LD4L/lucene/cerl/person/";
+	if (args.length == 1 && args[0].equals("ligatus"))
+	    lucenePath = dataPath + "LD4L/lucene/ligatus/";
 
 	logger.info("endpoint: " + endpoint);
 	logger.info("triplestore: " + tripleStore);
@@ -292,6 +302,8 @@ public class Indexer {
 	    indexCERLimprint(theWriter);
 	if (args.length > 0 && args[0].equals("cerl") && args[1].equals("person"))
 	    indexCERLperson(theWriter);
+	if (args.length > 0 && args[0].equals("ligatus"))
+	    indexLigatus(theWriter);
 
 	if (theWriter != null && !args[0].equals("rda")) {
 	    logger.info("optimizing index...");
@@ -319,8 +331,85 @@ public class Indexer {
 	
 	return buffer.toString().trim();
     }
+    
+    static int count = 0;
+    static String generatePayload(String queryURL) throws MalformedURLException, IOException, InterruptedException {
+	StringBuffer buffer = new StringBuffer();
+	
+//	if (++count % 1000 == 0)
+//	    Thread.sleep(2000);
+	
+	try {
+	    URLConnection theIndexConnection = (new URL(queryURL)).openConnection();
+	    BufferedReader IODesc = new BufferedReader(new InputStreamReader(theIndexConnection.getInputStream()));
 
-    static void indexCERLcorporate(IndexWriter theWriter) throws CorruptIndexException, IOException {
+	    String triple = null;
+	    while ((triple = IODesc.readLine()) != null) {
+	        triple = triple.trim();
+	        logger.info("\ttriple: " + triple);
+	        buffer.append(triple + "\n");
+	    }
+	    IODesc.close();
+	} catch (Exception e) {
+	    logger.error("Exception raised for query: " + queryURL);
+	}
+	
+	return buffer.toString();
+    }
+
+    static void indexLigatus(IndexWriter theWriter) throws CorruptIndexException, IOException {
+	int count = 0;
+	String query =
+		" SELECT DISTINCT ?s ?sl where { "
+		+ "  ?s rdf:type skos:Concept . "
+		+ "  ?s skos:prefLabel ?sl . "
+		+ "  FILTER (lang(?sl) = 'en') "
+		+ "}";
+	ResultSet rs = getResultSet(prefix + query);
+	while (rs.hasNext()) {
+	    count++;
+	    QuerySolution sol = rs.nextSolution();
+	    String uri = sol.get("?s").toString();
+	    String label = sol.get("?sl").asLiteral().getString();
+	    logger.info("\turi: " + uri + "\tlabel: " + label);
+	    
+	    Document theDocument = new Document();
+	    theDocument.add(new Field("uri", uri, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("name", label, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new Field("content", label, Field.Store.NO, Field.Index.ANALYZED));
+	    
+	    String query1 = 
+		  "SELECT DISTINCT ?lab WHERE { "
+		+ "<" + uri + "> skos:prefLabel ?lab . "
+		+ "}";
+	    ResultSet ars = getResultSet(prefix + query1);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String name = asol.get("?lab").asLiteral().getString();
+		logger.info("\t\tprefLabel: " + name);
+		theDocument.add(new Field("content", name, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+
+	    String query2 = 
+		  "SELECT DISTINCT ?lab WHERE { "
+		+ "<" + uri + "> skos:altLabel ?lab . "
+		+ "}";
+	    ars = getResultSet(prefix + query2);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String name = asol.get("?lab").asLiteral().getString();
+		logger.info("\t\taltLabel: " + name);
+		theDocument.add(new Field("content", name, Field.Store.NO, Field.Index.ANALYZED));
+	    }
+
+	    theWriter.addDocument(theDocument);
+	    if (count % 10000 == 0)
+		logger.info("count: " + count);
+	}
+	logger.info("total count: " + count);
+    }
+    
+    static void indexCERLcorporate(IndexWriter theWriter) throws CorruptIndexException, IOException, InterruptedException {
 	int count = 0;
 	String query =
 		" SELECT DISTINCT ?s ?lab where { "+
@@ -342,6 +431,7 @@ public class Indexer {
 	    theDocument.add(new Field("uri", uri, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("name", label, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("content", label, Field.Store.NO, Field.Index.ANALYZED));
+	    theDocument.add(new Field("payload", generatePayload("http://services.ld4l.org/ld4l_services/cerl_corporate_lookup.jsp?uri=" + uri), Field.Store.YES, Field.Index.NOT_ANALYZED));
 
 	    String query2 = 
 		  "SELECT DISTINCT ?altlabel WHERE { "
@@ -363,7 +453,7 @@ public class Indexer {
 	logger.info("total count: " + count);
     }
     
-    static void indexCERLimprint(IndexWriter theWriter) throws CorruptIndexException, IOException {
+    static void indexCERLimprint(IndexWriter theWriter) throws CorruptIndexException, IOException, InterruptedException {
 	int count = 0;
 	String query =
 		" SELECT DISTINCT ?s ?lab where { "+
@@ -385,6 +475,7 @@ public class Indexer {
 	    theDocument.add(new Field("uri", uri, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("name", label, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("content", label, Field.Store.NO, Field.Index.ANALYZED));
+	    theDocument.add(new Field("payload", generatePayload("http://services.ld4l.org/ld4l_services/cerl_imprint_lookup.jsp?uri=" + uri), Field.Store.YES, Field.Index.NOT_ANALYZED));
 
 	    String query2 = 
 		  "SELECT DISTINCT ?altlabel WHERE { "
@@ -406,7 +497,7 @@ public class Indexer {
 	logger.info("total count: " + count);
     }
     
-    static void indexCERLperson(IndexWriter theWriter) throws CorruptIndexException, IOException {
+    static void indexCERLperson(IndexWriter theWriter) throws CorruptIndexException, IOException, InterruptedException {
 	int count = 0;
 	String query =
 		" SELECT DISTINCT ?s ?lab where { "+
@@ -428,6 +519,7 @@ public class Indexer {
 	    theDocument.add(new Field("uri", uri, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("name", label, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("content", label, Field.Store.NO, Field.Index.ANALYZED));
+	    theDocument.add(new Field("payload", generatePayload("http://services.ld4l.org/ld4l_services/cerl_person_lookup.jsp?uri=" + uri), Field.Store.YES, Field.Index.NOT_ANALYZED));
 
 	    String query2 = 
 		  "SELECT DISTINCT ?altlabel WHERE { "
@@ -449,6 +541,7 @@ public class Indexer {
 	logger.info("total count: " + count);
     }
     
+    @SuppressWarnings("deprecation")
     static void indexRDA() throws CorruptIndexException, IOException {
 	String[] elements = {"AspectRatio", "CollTitle", "IllusContent", "ModeIssue", "MusNotation", "RDACarrierEU", "RDACarrierType", "RDACartoDT", "RDAColourContent", "RDAContentType", "RDAGeneration",
 		             "RDAMaterial", "RDAMediaType", "RDAPolarity", "RDARecordingSources", "RDAReductionRatio", "RDARegionalEncoding", "RDATerms", "RDATypeOfBinding", "RDAbaseMaterial", "RDAproductionMethod",
