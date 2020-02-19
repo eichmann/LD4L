@@ -102,7 +102,7 @@ public class Indexer {
 	} else if (args.length > 1 && args[0].equals("dbpedia")) {
 	    tripleStore = dataPath + "dbpedia_2016-14";
 	    endpoint = "http://services.ld4l.org/fuseki/dbpedia/sparql";
-	} else if (args.length == 1 && args[0].equals("mesh")) {
+	} else if (args.length > 1 && args[0].equals("mesh")) {
 	    tripleStore = dataPath + "MeSH";
 	    endpoint = "http://services.ld4l.org/fuseki/mesh/sparql";
 	} else if (args.length > 1 && args[0].equals("share_vde") && args[1].equals("merge")) {
@@ -193,8 +193,10 @@ public class Indexer {
 	    lucenePath = dataPath + "LD4L/lucene/share_vde/" + args[1] + "/superwork";
 	if (args.length > 2 && args[0].equals("share_vde") && args[2].equals("instance"))
 	    lucenePath = dataPath + "LD4L/lucene/share_vde/" + args[1] + "/instance";
-	if (args.length == 1 && args[0].equals("mesh"))
-	    lucenePath = dataPath + "LD4L/lucene/mesh";
+	if (args.length > 1 && args[0].equals("mesh") && args[1].equals("subject"))
+	    lucenePath = dataPath + "LD4L/lucene/mesh/subject";
+	if (args.length > 1 && args[0].equals("mesh") && args[1].equals("form"))
+	    lucenePath = dataPath + "LD4L/lucene/mesh/form";
 	if (args.length == 1 && args[0].equals("rda"))
 	    lucenePath = dataPath + "LD4L/lucene/rda/";
 	if (args.length > 1 && args[0].equals("cerl") && args[1].equals("corporate"))
@@ -292,8 +294,12 @@ public class Indexer {
 	    if (args.length > 0 && args[0].equals("share_vde") && args[2].equals("instance"))
 		indexShareVDE(theWriter, args[1], "http://id.loc.gov/ontologies/bibframe/Instance");
 	}
-	if (args.length > 0 && args[0].equals("mesh"))
-	    indexMeSH(theWriter);
+	if (args.length > 0 && args[0].equals("mesh") && args[1].equals("subject")) {
+	    indexMeSH(theWriter, "TopicalDescriptor");
+	    indexMeSH(theWriter, "GeographicalDescriptor");
+	}
+	if (args.length > 0 && args[0].equals("mesh") && args[1].equals("form"))
+	    indexMeSH(theWriter, "PublicationType");
 	if (args.length > 0 && args[0].equals("rda"))
 	    indexRDA();
 	if (args.length > 0 && args[0].equals("cerl") && args[1].equals("corporate"))
@@ -346,7 +352,7 @@ public class Indexer {
 	    String triple = null;
 	    while ((triple = IODesc.readLine()) != null) {
 	        triple = triple.trim();
-	        logger.info("\ttriple: " + triple);
+	        logger.debug("\ttriple: " + triple);
 	        buffer.append(triple + "\n");
 	    }
 	    IODesc.close();
@@ -740,18 +746,13 @@ public class Indexer {
 	logger.info("total " + entity + " count: " + count);
     }
     
-    static void indexMeSH(IndexWriter theWriter) throws CorruptIndexException, IOException, InterruptedException {
-	indexMeSH(theWriter, "TopicalDescriptor");
-	indexMeSH(theWriter, "GeographicalDescriptor");
-	indexMeSH(theWriter, "PublicationType");
-    }
-    
     static void indexMeSH(IndexWriter theWriter, String vocab) throws CorruptIndexException, IOException, InterruptedException {
 	int count = 0;
 	String query =
-		" SELECT DISTINCT ?s ?lab ?def where { "+
+		" SELECT DISTINCT ?s ?lab where { "+
 		"  ?s rdf:type <http://id.nlm.nih.gov/mesh/vocab#" + vocab + "> . "+
 		"  ?s <http://www.w3.org/2000/01/rdf-schema#label> ?lab . "+
+		"  ?s <http://id.nlm.nih.gov/mesh/vocab#active> true . "+
 		"}";
 	ResultSet rs = getResultSet(prefix + query);
 	while (rs.hasNext()) {
