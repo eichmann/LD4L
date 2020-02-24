@@ -31,6 +31,7 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
+import org.apache.lucene.util.Version;
 
 public class Indexer {
     protected static Logger logger = Logger.getLogger(Indexer.class);
@@ -205,6 +206,9 @@ public class Indexer {
 	    lucenePath = dataPath + "LD4L/lucene/cerl/imprint/";
 	if (args.length > 1 && args[0].equals("cerl") && args[1].equals("person"))
 	    lucenePath = dataPath + "LD4L/lucene/cerl/person/";
+	if (args.length > 1 && args[0].equals("cerl") && args[1].equals("merge")) {
+	    // lucene path set by merge method
+	}
 	if (args.length == 1 && args[0].equals("ligatus"))
 	    lucenePath = dataPath + "LD4L/lucene/ligatus/";
 
@@ -213,8 +217,9 @@ public class Indexer {
 	logger.info("lucenePath: " + lucenePath);
 	IndexWriter theWriter = null;
 	
-	if (endpoint != null & !args[0].equals("rda"))
-	    theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath)), new StandardAnalyzer(org.apache.lucene.util.Version.LUCENE_30), true, IndexWriter.MaxFieldLength.UNLIMITED);
+	if (endpoint != null & !args[0].equals("rda") & !args[0].equals("cerl"))
+	    theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath)),
+		    new IndexWriterConfig(Version.LUCENE_43, new StandardAnalyzer(org.apache.lucene.util.Version.LUCENE_43)));
 	
 	if (args.length == 1 && args[0].equals("agrovoc"))
 	    indexAgrovoc(theWriter);
@@ -308,12 +313,13 @@ public class Indexer {
 	    indexCERLimprint(theWriter);
 	if (args.length > 0 && args[0].equals("cerl") && args[1].equals("person"))
 	    indexCERLperson(theWriter);
+	if (args.length > 0 && args[0].equals("cerl") && args[1].equals("merge"))
+	    mergeCERL();
 	if (args.length > 0 && args[0].equals("ligatus"))
 	    indexLigatus(theWriter);
 
 	if (theWriter != null && !args[0].equals("rda")) {
 	    logger.info("optimizing index...");
-	    theWriter.optimize();
 	    theWriter.close();
 	}
     }
@@ -547,6 +553,19 @@ public class Indexer {
 	logger.info("total count: " + count);
     }
     
+    static void mergeCERL() throws CorruptIndexException, IOException {
+	String[] types = { "person", "corporate", "imprint" };
+	Vector<String> requests = new Vector<String>();
+
+	for (String type : types) {
+	    lucenePath = dataPath + "LD4L/lucene/cerl/" + type;
+	    logger.info("type: " + type + "\trequest: " + lucenePath);
+	    requests.add(lucenePath);
+	}
+	logger.info("request vector: " + requests);
+	mergeIndices(requests, dataPath + "LD4L/lucene/cerl/merged");
+    }
+    
     @SuppressWarnings("deprecation")
     static void indexRDA() throws CorruptIndexException, IOException {
 	String[] elements = {"AspectRatio", "CollTitle", "IllusContent", "ModeIssue", "MusNotation", "RDACarrierEU", "RDACarrierType", "RDACartoDT", "RDAColourContent", "RDAContentType", "RDAGeneration",
@@ -557,12 +576,11 @@ public class Indexer {
 		             };
 	
 	for (String element : elements) {
-	    IndexWriter theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath + element)), new StandardAnalyzer(org.apache.lucene.util.Version.LUCENE_30), true, IndexWriter.MaxFieldLength.UNLIMITED);
-	    
+	    IndexWriter theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath + element)),
+		    new IndexWriterConfig(Version.LUCENE_43, new StandardAnalyzer(org.apache.lucene.util.Version.LUCENE_43)));
+
 	    indexRDA(theWriter, element);
-	    
-	    logger.info("optimizing index...");
-	    theWriter.optimize();
+
 	    theWriter.close();
 	}
     }
@@ -1583,9 +1601,8 @@ public class Indexer {
 	}
     }
 
-    @SuppressWarnings("deprecation")
     public static void mergeIndices(Vector<String> requests, String targetPath) throws CorruptIndexException, IOException {
-	IndexWriterConfig config = new IndexWriterConfig(org.apache.lucene.util.Version.LUCENE_30, new StandardAnalyzer(org.apache.lucene.util.Version.LUCENE_30));
+	IndexWriterConfig config = new IndexWriterConfig(org.apache.lucene.util.Version.LUCENE_43, new StandardAnalyzer(org.apache.lucene.util.Version.LUCENE_43));
 	config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 	config.setRAMBufferSizeMB(500);
 	IndexWriter theWriter = new IndexWriter(FSDirectory.open(new File(targetPath)), config);
@@ -1601,8 +1618,6 @@ public class Indexer {
 	logger.info("\ttargetPath: " + targetPath);
 	theWriter.addIndexes(indices);
 
-	logger.info("optimizing index...");
-	theWriter.optimize();
 	theWriter.close();
 	logger.info("done");
     }

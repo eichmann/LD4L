@@ -55,11 +55,6 @@
     <type>pom</type>
     <version>3.0.0</version>
     </dependency>
-    <dependency>
-        <groupId>org.apache.lucene</groupId>
-        <artifactId>lucene-core</artifactId>
-        <version>3.6.1</version>
-    </dependency>
   <dependency>
     <groupId>org.json</groupId>
     <artifactId>json</artifactId>
@@ -75,6 +70,31 @@
   	<artifactId>NLP</artifactId>
   	<version>0.0.1-SNAPSHOT</version>
   </dependency>
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-core</artifactId>
+			<version>4.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-queries</artifactId>
+			<version>4.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-facet</artifactId>
+			<version>4.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-queryparser</artifactId>
+			<version>4.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-analyzers-common</artifactId>
+			<version>4.3.0</version>
+		</dependency>
   </dependencies>
 	<build>
 	  	<plugins>
@@ -121,8 +141,8 @@
 	      <artifactId>maven-compiler-plugin</artifactId>
 	      <version>2.0.2</version>
 	      <configuration>
-		      <source>1.6</source>
-		      <target>1.6</target>
+		      <source>1.8</source>
+		      <target>1.8</target>
 		  </configuration>
     </plugin>
       </plugins>
