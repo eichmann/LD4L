@@ -22,7 +22,6 @@ import org.apache.jena.query.Syntax;
 import org.apache.jena.tdb.TDBFactory;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.CorruptIndexException;
@@ -32,6 +31,8 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.util.Version;
+
+import edu.uiowa.lucene.ld4lSearch.LD4LAnalyzer;
 
 public class Indexer {
     protected static Logger logger = Logger.getLogger(Indexer.class);
@@ -57,7 +58,6 @@ public class Indexer {
     private static Pattern datePattern = Pattern.compile("([0-9]{4})-([0-9]{4})");
 
     
-    @SuppressWarnings("deprecation")
     public static void main(String[] args) throws CorruptIndexException, LockObtainFailedException, IOException, InterruptedException {
 	PropertyConfigurator.configure("log4j.info");
 
@@ -217,9 +217,9 @@ public class Indexer {
 	logger.info("lucenePath: " + lucenePath);
 	IndexWriter theWriter = null;
 	
-	if (endpoint != null & !args[0].equals("rda") & !args[0].equals("cerl"))
+	if (endpoint != null & !args[0].equals("rda"))
 	    theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath)),
-		    new IndexWriterConfig(Version.LUCENE_43, new StandardAnalyzer(org.apache.lucene.util.Version.LUCENE_43)));
+		    new IndexWriterConfig(Version.LUCENE_43, new LD4LAnalyzer()));
 	
 	if (args.length == 1 && args[0].equals("agrovoc"))
 	    indexAgrovoc(theWriter);
@@ -369,6 +369,7 @@ public class Indexer {
 	return buffer.toString();
     }
 
+    @SuppressWarnings("deprecation")
     static void indexLigatus(IndexWriter theWriter) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
@@ -421,6 +422,7 @@ public class Indexer {
 	logger.info("total count: " + count);
     }
     
+    @SuppressWarnings("deprecation")
     static void indexCERLcorporate(IndexWriter theWriter) throws CorruptIndexException, IOException, InterruptedException {
 	int count = 0;
 	String query =
@@ -465,6 +467,7 @@ public class Indexer {
 	logger.info("total count: " + count);
     }
     
+    @SuppressWarnings("deprecation")
     static void indexCERLimprint(IndexWriter theWriter) throws CorruptIndexException, IOException, InterruptedException {
 	int count = 0;
 	String query =
@@ -509,6 +512,7 @@ public class Indexer {
 	logger.info("total count: " + count);
     }
     
+    @SuppressWarnings("deprecation")
     static void indexCERLperson(IndexWriter theWriter) throws CorruptIndexException, IOException, InterruptedException {
 	int count = 0;
 	String query =
@@ -566,7 +570,6 @@ public class Indexer {
 	mergeIndices(requests, dataPath + "LD4L/lucene/cerl/merged");
     }
     
-    @SuppressWarnings("deprecation")
     static void indexRDA() throws CorruptIndexException, IOException {
 	String[] elements = {"AspectRatio", "CollTitle", "IllusContent", "ModeIssue", "MusNotation", "RDACarrierEU", "RDACarrierType", "RDACartoDT", "RDAColourContent", "RDAContentType", "RDAGeneration",
 		             "RDAMaterial", "RDAMediaType", "RDAPolarity", "RDARecordingSources", "RDAReductionRatio", "RDARegionalEncoding", "RDATerms", "RDATypeOfBinding", "RDAbaseMaterial", "RDAproductionMethod",
@@ -577,7 +580,7 @@ public class Indexer {
 	
 	for (String element : elements) {
 	    IndexWriter theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath + element)),
-		    new IndexWriterConfig(Version.LUCENE_43, new StandardAnalyzer(org.apache.lucene.util.Version.LUCENE_43)));
+		    new IndexWriterConfig(Version.LUCENE_43, new LD4LAnalyzer()));
 
 	    indexRDA(theWriter, element);
 
@@ -585,6 +588,7 @@ public class Indexer {
 	}
     }
 
+    @SuppressWarnings("deprecation")
     static void indexRDA(IndexWriter theWriter, String entity) throws CorruptIndexException, IOException {
 	logger.info("indexing " + entity + "...");
 	int count = 0;
@@ -638,6 +642,7 @@ public class Indexer {
 	logger.info("total " + entity + " count: " + count);
     }
     
+    @SuppressWarnings("deprecation")
     static void indexShareVDE(IndexWriter theWriter, String site, String entity) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
@@ -725,6 +730,7 @@ public class Indexer {
 	}
     }
     
+    @SuppressWarnings("deprecation")
     static void indexDBpedia(IndexWriter theWriter, String entity) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
@@ -764,6 +770,7 @@ public class Indexer {
 	logger.info("total " + entity + " count: " + count);
     }
     
+    @SuppressWarnings("deprecation")
     static void indexMeSH(IndexWriter theWriter, String vocab) throws CorruptIndexException, IOException, InterruptedException {
 	int count = 0;
 	String query =
@@ -934,6 +941,7 @@ public class Indexer {
 	logger.info("total count: " + count);
     }
     
+    @SuppressWarnings("deprecation")
     static void indexGetty(IndexWriter theWriter, String type) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
@@ -993,6 +1001,7 @@ public class Indexer {
 	logger.info("total concepts: " + count);
     }
     
+    @SuppressWarnings("deprecation")
     static void indexGettyAAT(IndexWriter theWriter, String type) throws CorruptIndexException, IOException {
 	int count = 0;
 	String facetQuery = 
@@ -1066,6 +1075,7 @@ public class Indexer {
 	logger.info("total concepts: " + count);
     }
     
+    @SuppressWarnings("deprecation")
     static void indexAgrovoc(IndexWriter theWriter) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
@@ -1118,6 +1128,7 @@ public class Indexer {
 	logger.info("total concepts: " + count);
     }
     
+    @SuppressWarnings("deprecation")
     static void indexNALT(IndexWriter theWriter) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
@@ -1162,6 +1173,7 @@ public class Indexer {
 	logger.info("total concepts: " + count);
     }
     
+    @SuppressWarnings("deprecation")
     static void indexWorkTitles(IndexWriter theWriter) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
@@ -1189,6 +1201,7 @@ public class Indexer {
 	logger.info("total titles: " + count);
     }
     
+    @SuppressWarnings("deprecation")
     static void indexPersons(IndexWriter theWriter) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
@@ -1218,6 +1231,7 @@ public class Indexer {
 	logger.info("total persons: " + count);
     }
 
+    @SuppressWarnings("deprecation")
     static void indexLoCNames(IndexWriter theWriter, String typeConstraint) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
@@ -1253,6 +1267,7 @@ public class Indexer {
 	logger.info("total names: " + count);
     }
     
+    @SuppressWarnings("deprecation")
     static void indexLoCRWONames(IndexWriter theWriter, String typeConstraint) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
@@ -1290,6 +1305,7 @@ public class Indexer {
 	logger.info("total names: " + count);
     }
     
+    @SuppressWarnings("deprecation")
     static void annotateLoCName(String URI, Document theDocument, String predicate1, String predicate2) {
 	String query =
 		"SELECT ?value WHERE { "
@@ -1306,6 +1322,7 @@ public class Indexer {
 	}	
     }
 
+    @SuppressWarnings("deprecation")
     static void indexLoCSubjects(IndexWriter theWriter) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
@@ -1340,6 +1357,7 @@ public class Indexer {
     // _:bnode11622439792158605647 <http://id.loc.gov/ontologies/RecordInfo#recordStatus> "deprecated" .
     // _:bnode12837739696807266797 <http://id.loc.gov/ontologies/RecordInfo#recordStatus> "revised" .
     // _:bnode427471899577210033 <http://id.loc.gov/ontologies/RecordInfo#recordStatus> "new" .
+    @SuppressWarnings("deprecation")
     static void indexLoCGenre(IndexWriter theWriter, boolean deprecated) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query = deprecated ?
@@ -1391,6 +1409,7 @@ public class Indexer {
 	logger.info("total names: " + count);
     }
 
+    @SuppressWarnings("deprecation")
     static void indexLoCDemographics(IndexWriter theWriter) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
@@ -1455,6 +1474,7 @@ public class Indexer {
 	logger.info("total demographics: " + count);
     }
     
+    @SuppressWarnings("deprecation")
     static void addWeightedField(Document theDocument, String query, String label, int weight) {
 	ResultSet prs = getResultSet(prefix + query);
 	while (prs.hasNext()) {
@@ -1466,6 +1486,7 @@ public class Indexer {
 	}
     }
 
+    @SuppressWarnings("deprecation")
     static void indexLoCPerformance(IndexWriter theWriter) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
@@ -1511,6 +1532,7 @@ public class Indexer {
 	logger.info("total performance: " + count);
     }
 
+    @SuppressWarnings("deprecation")
     static void indexLoCWorksInstances(IndexWriter theWriter, String type) throws CorruptIndexException, IOException {
 	int count = 0;
 	String query =
@@ -1557,6 +1579,7 @@ public class Indexer {
 	logger.info("total performance: " + count);
     }
 
+    @SuppressWarnings("deprecation")
     static void indexVariant(Document theDocument, String uri, String className) throws CorruptIndexException, IOException {
 	String query =
 		"SELECT DISTINCT ?name WHERE { "
@@ -1572,6 +1595,7 @@ public class Indexer {
 	}
     }
     
+    @SuppressWarnings("deprecation")
     static void indexVariant2(Document theDocument, String uri, String className) throws CorruptIndexException, IOException {
 	String query =
 		"SELECT DISTINCT ?name WHERE { "
@@ -1602,7 +1626,7 @@ public class Indexer {
     }
 
     public static void mergeIndices(Vector<String> requests, String targetPath) throws CorruptIndexException, IOException {
-	IndexWriterConfig config = new IndexWriterConfig(org.apache.lucene.util.Version.LUCENE_43, new StandardAnalyzer(org.apache.lucene.util.Version.LUCENE_43));
+	IndexWriterConfig config = new IndexWriterConfig(org.apache.lucene.util.Version.LUCENE_43, new LD4LAnalyzer());
 	config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 	config.setRAMBufferSizeMB(500);
 	IndexWriter theWriter = new IndexWriter(FSDirectory.open(new File(targetPath)), config);
