@@ -1232,7 +1232,7 @@ public class Indexer {
     }
 
     @SuppressWarnings("deprecation")
-    static void indexLoCNames(IndexWriter theWriter, String typeConstraint) throws CorruptIndexException, IOException {
+    static void indexLoCNames(IndexWriter theWriter, String typeConstraint) throws CorruptIndexException, IOException, InterruptedException {
 	int count = 0;
 	String query =
 		"SELECT ?uri ?name WHERE { "
@@ -1259,6 +1259,9 @@ public class Indexer {
 	    annotateLoCName(URI, theDocument, "fieldOfActivity", "label");
 	    annotateLoCName(URI, theDocument, "fieldOfActivity", "authoritativeLabel");
 	    annotateLoCName(URI, theDocument, "occupation", "authoritativeLabel");
+	    
+	    theDocument.add(new Field("payload", generatePayload("http://services.ld4l.org/ld4l_services/loc_name_lookup.jsp?uri=" + URI), Field.Store.YES, Field.Index.NOT_ANALYZED));
+
 	    theWriter.addDocument(theDocument);
 	    count++;
 	    if (count % 100000 == 0)
@@ -1268,7 +1271,7 @@ public class Indexer {
     }
     
     @SuppressWarnings("deprecation")
-    static void indexLoCRWONames(IndexWriter theWriter, String typeConstraint) throws CorruptIndexException, IOException {
+    static void indexLoCRWONames(IndexWriter theWriter, String typeConstraint) throws CorruptIndexException, IOException, InterruptedException {
 	int count = 0;
 	String query =
 		"SELECT ?uri ?name ?rwo WHERE { "
@@ -1297,6 +1300,9 @@ public class Indexer {
 //	    annotateLoCName(URI, theDocument, "fieldOfActivity", "label");
 //	    annotateLoCName(URI, theDocument, "fieldOfActivity", "authoritativeLabel");
 //	    annotateLoCName(URI, theDocument, "occupation", "authoritativeLabel");
+	    
+	    theDocument.add(new Field("payload", generatePayload("http://services.ld4l.org/ld4l_services/loc_rwo_name_lookup.jsp?uri=" + URI), Field.Store.YES, Field.Index.NOT_ANALYZED));
+
 	    theWriter.addDocument(theDocument);
 	    count++;
 	    if (count % 100000 == 0)
@@ -1323,7 +1329,7 @@ public class Indexer {
     }
 
     @SuppressWarnings("deprecation")
-    static void indexLoCSubjects(IndexWriter theWriter) throws CorruptIndexException, IOException {
+    static void indexLoCSubjects(IndexWriter theWriter) throws CorruptIndexException, IOException, InterruptedException {
 	int count = 0;
 	String query =
 		"SELECT ?uri ?subject WHERE { "
@@ -1345,6 +1351,9 @@ public class Indexer {
 	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("name", subject, Field.Store.YES, Field.Index.NOT_ANALYZED));
 	    theDocument.add(new Field("content", retokenizeString(subject, true), Field.Store.NO, Field.Index.ANALYZED));
+	    
+	    theDocument.add(new Field("payload", generatePayload("http://services.ld4l.org/ld4l_services/loc_subject_lookup.jsp?uri=" + URI), Field.Store.YES, Field.Index.NOT_ANALYZED));
+
 	    theWriter.addDocument(theDocument);
 	    count++;
 	    if (count % 100000 == 0)
@@ -1358,7 +1367,7 @@ public class Indexer {
     // _:bnode12837739696807266797 <http://id.loc.gov/ontologies/RecordInfo#recordStatus> "revised" .
     // _:bnode427471899577210033 <http://id.loc.gov/ontologies/RecordInfo#recordStatus> "new" .
     @SuppressWarnings("deprecation")
-    static void indexLoCGenre(IndexWriter theWriter, boolean deprecated) throws CorruptIndexException, IOException {
+    static void indexLoCGenre(IndexWriter theWriter, boolean deprecated) throws CorruptIndexException, IOException, InterruptedException {
 	int count = 0;
 	String query = deprecated ?
 		    "SELECT ?uri ?subject WHERE { "
@@ -1401,6 +1410,8 @@ public class Indexer {
 		theDocument.add(new Field("content", altlabel, Field.Store.NO, Field.Index.ANALYZED));
 	    }
 	    
+	    theDocument.add(new Field("payload", generatePayload("http://services.ld4l.org/ld4l_services/loc_genre_lookup.jsp?uri=" + URI), Field.Store.YES, Field.Index.NOT_ANALYZED));
+
 	    theWriter.addDocument(theDocument);
 	    count++;
 	    if (count % 100000 == 0)
@@ -1410,7 +1421,7 @@ public class Indexer {
     }
 
     @SuppressWarnings("deprecation")
-    static void indexLoCDemographics(IndexWriter theWriter) throws CorruptIndexException, IOException {
+    static void indexLoCDemographics(IndexWriter theWriter) throws CorruptIndexException, IOException, InterruptedException {
 	int count = 0;
 	String query =
 		"SELECT ?uri ?subject WHERE { "
@@ -1466,6 +1477,8 @@ public class Indexer {
 		"narrower",
 		1);
 	    
+	    theDocument.add(new Field("payload", generatePayload("http://services.ld4l.org/ld4l_services/loc_demographics_lookup.jsp?uri=" + URI), Field.Store.YES, Field.Index.NOT_ANALYZED));
+
 	    theWriter.addDocument(theDocument);
 	    count++;
 	    if (count % 100000 == 0)
@@ -1487,7 +1500,7 @@ public class Indexer {
     }
 
     @SuppressWarnings("deprecation")
-    static void indexLoCPerformance(IndexWriter theWriter) throws CorruptIndexException, IOException {
+    static void indexLoCPerformance(IndexWriter theWriter) throws CorruptIndexException, IOException, InterruptedException {
 	int count = 0;
 	String query =
 		"SELECT ?uri ?subject WHERE { "
@@ -1524,6 +1537,8 @@ public class Indexer {
 		theDocument.add(new Field("content", altlabel, Field.Store.NO, Field.Index.ANALYZED));
 	    }
 	    
+	    theDocument.add(new Field("payload", generatePayload("http://services.ld4l.org/ld4l_services/loc_performance_lookup.jsp?uri=" + URI), Field.Store.YES, Field.Index.NOT_ANALYZED));
+
 	    theWriter.addDocument(theDocument);
 	    count++;
 	    if (count % 100000 == 0)
@@ -1533,7 +1548,7 @@ public class Indexer {
     }
 
     @SuppressWarnings("deprecation")
-    static void indexLoCWorksInstances(IndexWriter theWriter, String type) throws CorruptIndexException, IOException {
+    static void indexLoCWorksInstances(IndexWriter theWriter, String type) throws CorruptIndexException, IOException, InterruptedException {
 	int count = 0;
 	String query =
 		"SELECT ?uri ?subject WHERE { "
@@ -1571,6 +1586,14 @@ public class Indexer {
 //		theDocument.add(new Field("content", altlabel, Field.Store.NO, Field.Index.ANALYZED));
 //	    }
 	    
+	    switch (type) {
+	    case "Instance":
+		theDocument.add(new Field("payload", generatePayload("http://services.ld4l.org/ld4l_services/loc_instance_lookup.jsp?uri=" + URI), Field.Store.YES, Field.Index.NOT_ANALYZED));
+		break;
+	    case "Work":
+		theDocument.add(new Field("payload", generatePayload("http://services.ld4l.org/ld4l_services/loc_work_lookup.jsp?uri=" + URI), Field.Store.YES, Field.Index.NOT_ANALYZED));
+		break;
+	    }
 	    theWriter.addDocument(theDocument);
 	    count++;
 	    if (count % 100000 == 0)
