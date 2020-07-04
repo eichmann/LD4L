@@ -347,24 +347,30 @@ public class Indexer {
     static int count = 0;
     static String generatePayload(String queryURL) throws MalformedURLException, IOException, InterruptedException {
 	StringBuffer buffer = new StringBuffer();
+	boolean success = false;
 	
 //	if (++count % 1000 == 0)
 //	    Thread.sleep(2000);
 	
-	try {
-	    URLConnection theIndexConnection = (new URL(queryURL)).openConnection();
-	    BufferedReader IODesc = new BufferedReader(new InputStreamReader(theIndexConnection.getInputStream()));
+	do {
+	    try {
+		URLConnection theIndexConnection = (new URL(queryURL)).openConnection();
+		BufferedReader IODesc = new BufferedReader(new InputStreamReader(theIndexConnection.getInputStream()));
 
-	    String triple = null;
-	    while ((triple = IODesc.readLine()) != null) {
-	        triple = triple.trim();
-	        logger.debug("\ttriple: " + triple);
-	        buffer.append(triple + "\n");
-	    }
-	    IODesc.close();
-	} catch (Exception e) {
-	    logger.error("Exception raised for query: " + queryURL);
-	}
+		String triple = null;
+		while ((triple = IODesc.readLine()) != null) {
+		    triple = triple.trim();
+		    logger.debug("\ttriple: " + triple);
+		    buffer.append(triple + "\n");
+		}
+		IODesc.close();
+		success = true;
+	    } catch (Exception e) {
+		logger.error("*** Exception raised for query: " + queryURL);
+		success = false;
+		Thread.sleep(5000);
+	    } 
+	} while (!success);
 	
 	return buffer.toString();
     }
