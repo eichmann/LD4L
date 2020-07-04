@@ -217,9 +217,12 @@ public class Indexer {
 	logger.info("lucenePath: " + lucenePath);
 	IndexWriter theWriter = null;
 	
-	if (endpoint != null & !args[0].equals("rda"))
-	    theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath)),
-		    new IndexWriterConfig(Version.LUCENE_43, new LD4LAnalyzer()));
+	if (endpoint != null & !args[0].equals("rda")) {
+	    IndexWriterConfig config = new IndexWriterConfig(org.apache.lucene.util.Version.LUCENE_43, new LD4LAnalyzer());
+	    config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+	    config.setRAMBufferSizeMB(500);
+	    theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath)), config);
+	}
 	
 	if (args.length == 1 && args[0].equals("agrovoc"))
 	    indexAgrovoc(theWriter);
