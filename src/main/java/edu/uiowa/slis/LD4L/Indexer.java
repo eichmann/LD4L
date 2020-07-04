@@ -364,7 +364,13 @@ public class Indexer {
 		    buffer.append(triple + "\n");
 		}
 		IODesc.close();
-		success = true;
+		if (buffer.length() > 0)
+		    success = true;
+		else {
+		    logger.error("*** empty payload returned - retrying...");
+		    success = false;
+		    Thread.sleep(5000);
+		}
 	    } catch (Exception e) {
 		logger.error("*** Exception raised for query: " + queryURL);
 		success = false;
