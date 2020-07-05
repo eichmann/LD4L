@@ -367,7 +367,7 @@ public class Indexer {
 		    buffer.append(triple + "\n");
 		}
 		IODesc.close();
-		if (buffer.length() > 0)
+		if (buffer.length() > 0 || !queryURL.contains("?uri=http:"))
 		    success = true;
 		else {
 		    logger.error("*** empty payload returned - retrying...");
