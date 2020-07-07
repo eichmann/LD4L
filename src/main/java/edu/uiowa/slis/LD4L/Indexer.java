@@ -24,6 +24,9 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StoredField;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -41,6 +44,7 @@ public class Indexer {
     static Dataset dataset = null;
     static String tripleStore = null;
     static String endpoint = null;
+    static boolean stemming = false;
     
     static String dataPath = "/usr/local/RAID/";
     static String lucenePath = null;
@@ -157,8 +161,10 @@ public class Indexer {
 	    else
 		lucenePath = dataPath + "LD4L/lucene/loc/genre_active";
 	}
-	if (args.length > 1 && args[0].equals("loc") && args[1].equals("demographics"))
+	if (args.length > 1 && args[0].equals("loc") && args[1].equals("demographics")) {
 	    lucenePath = dataPath + "LD4L/lucene/loc/demographics";
+	    stemming = true;
+	}
 	if (args.length > 1 && args[0].equals("loc") && args[1].equals("performance"))
 	    lucenePath = dataPath + "LD4L/lucene/loc/performance";
 	if (args.length > 1 && args[0].equals("loc") && args[1].equals("work"))
@@ -218,7 +224,7 @@ public class Indexer {
 	IndexWriter theWriter = null;
 	
 	if (endpoint != null & !args[0].equals("rda")) {
-	    IndexWriterConfig config = new IndexWriterConfig(org.apache.lucene.util.Version.LUCENE_43, new LD4LAnalyzer());
+	    IndexWriterConfig config = new IndexWriterConfig(org.apache.lucene.util.Version.LUCENE_43, new LD4LAnalyzer(stemming));
 	    config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 	    config.setRAMBufferSizeMB(500);
 	    theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath)), config);
@@ -1432,7 +1438,6 @@ public class Indexer {
 	logger.info("total names: " + count);
     }
 
-    @SuppressWarnings("deprecation")
     static void indexLoCDemographics(IndexWriter theWriter) throws CorruptIndexException, IOException, InterruptedException {
 	int count = 0;
 	String query =
@@ -1453,10 +1458,10 @@ public class Indexer {
 	    logger.info("uri: " + URI + "\tsubject: " + subject);
 	    
 	    Document theDocument = new Document();
-	    theDocument.add(new Field("uri", URI, Field.Store.YES, Field.Index.NOT_ANALYZED));
-	    theDocument.add(new Field("name", subject, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new StringField("uri", URI, Field.Store.YES));
+	    theDocument.add(new StringField("name", subject, Field.Store.YES));
 	    for (int i = 0; i < 10; i++) // result weighting hack
-		theDocument.add(new Field("content", retokenizeString(subject, true), Field.Store.NO, Field.Index.ANALYZED));
+		theDocument.add(new TextField("content", retokenizeString(subject, true), Field.Store.NO));
 
 	    // subject <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Authority>
 	    
@@ -1489,7 +1494,7 @@ public class Indexer {
 		"narrower",
 		1);
 	    
-	    theDocument.add(new Field("payload", generatePayload("http://services.ld4l.org/ld4l_services/loc_demographics_lookup.jsp?uri=" + URI), Field.Store.YES, Field.Index.NOT_ANALYZED));
+	    theDocument.add(new StoredField("payload", generatePayload("http://services.ld4l.org/ld4l_services/loc_demographics_lookup.jsp?uri=" + URI)));
 
 	    theWriter.addDocument(theDocument);
 	    count++;
