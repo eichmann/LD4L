@@ -1504,7 +1504,6 @@ public class Indexer {
 	logger.info("total demographics: " + count);
     }
     
-    @SuppressWarnings("deprecation")
     static void addWeightedField(Document theDocument, String query, String label, int weight) {
 	ResultSet prs = getResultSet(prefix + query);
 	while (prs.hasNext()) {
@@ -1512,7 +1511,7 @@ public class Indexer {
 	    String altlabel = psol.get("?"+label).asLiteral().getString();
 	    logger.info("\t" + label + ": " + altlabel + "\tweight: " + weight);
 	    for (int i = 0; i < weight; i++)
-		theDocument.add(new Field("content", retokenizeString(altlabel,true), Field.Store.NO, Field.Index.ANALYZED));
+		theDocument.add(new TextField("content", retokenizeString(altlabel,true), Field.Store.NO));
 	}
     }
 
