@@ -25,6 +25,11 @@ src/main/java/edu/uiowa/slis/LD4L/Sinopia/ValueConstraint.java -text
 src/main/java/edu/uiowa/slis/LD4L/SinopiaProfileLoader.java -text
 src/main/java/edu/uiowa/slis/LD4L/TripleLoader.java -text
 src/main/java/edu/uiowa/slis/LD4L/TripleStreamer.java -text
+src/main/java/edu/uiowa/slis/LD4L/indexing/LoC/DemographicsIndexer.java -text
+src/main/java/edu/uiowa/slis/LD4L/indexing/Queue.java -text
+src/main/java/edu/uiowa/slis/LD4L/indexing/ThreadedIndexer.java -text
+src/main/java/edu/uiowa/slis/LD4L/util/LocalProperties.java -text
+src/main/java/edu/uiowa/slis/LD4L/util/PropertyLoader.java -text
 src/main/resources/META-INF/taglib.tld -text
 src/non-packaged-resources/Model.clay -text
 src/non-packaged-resources/catalog-v001.xml -text
