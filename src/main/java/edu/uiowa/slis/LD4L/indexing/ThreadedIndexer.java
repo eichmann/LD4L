@@ -1,14 +1,9 @@
 package edu.uiowa.slis.LD4L.indexing;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.lang.invoke.MethodHandles;
-import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.regex.Matcher;
@@ -26,21 +21,21 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.tdb.TDBFactory;
 import org.apache.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
 import edu.uiowa.extraction.LocalProperties;
 import edu.uiowa.extraction.PropertyLoader;
 import edu.uiowa.lucene.ld4lSearch.LD4LAnalyzer;
-import edu.uiowa.slis.LD4L.indexing.LoC.DemographicsIndexer;
 
 public abstract class ThreadedIndexer {
     protected static Logger logger = Logger.getLogger(ThreadedIndexer.class);
@@ -53,12 +48,14 @@ public abstract class ThreadedIndexer {
     
     static String dataPath = null;
     static String lucenePath = null;
+    static String subauthority = null;
     protected static String prefix = null;
     private static Pattern datePattern = Pattern.compile("([0-9]{4})-([0-9]{4})");
     
     protected static IndexWriter theWriter = null;
     protected static Queue<String> uriQueue = new Queue<String>();
     protected static int count = 0;
+    private static String[] subauthorities = null;
 
     protected static void loadProperties(String propertyFileName) {
 	prop_file = PropertyLoader.loadProperties(propertyFileName);
@@ -66,20 +63,59 @@ public abstract class ThreadedIndexer {
 	lucenePath = prop_file.getProperty("lucenePath");
 	stemming = prop_file.getBooleanProperty("stemming");
 	dataset = TDBFactory.createDataset(tripleStore);
-
+    }
+    
+    protected static String[] getSubauthorities() {
+	if (subauthorities != null)
+	    return subauthorities;
+	String subauthorityString = prop_file.getProperty("subauthorities");
+	if (subauthorityString != null)
+	    subauthorities = subauthorityString.split("\\|");
+	return subauthorities;
+    }
+    
+    protected static boolean hasSubauthorities() {
+	return subauthorities != null;
+    }
+    
+    protected static void setSubauthority(String candidate) {
+	subauthority = candidate;
     }
     
     protected static void instantiateWriter() throws IOException {
 	IndexWriterConfig config = new IndexWriterConfig(org.apache.lucene.util.Version.LUCENE_43, new LD4LAnalyzer(stemming));
 	config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 	config.setRAMBufferSizeMB(500);
-	theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath)), config);
+	theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath + (subauthority == null ? "" : "_" + subauthority))), config);
+	logger.info("actual lucene path: " + lucenePath + (subauthority == null ? "" : "_" + subauthority));
     }
     
     protected static void closeWriter() throws IOException {
 	theWriter.close();
     }
     
+    protected static void mergeSubauthorities() throws CorruptIndexException, IOException {
+	IndexWriterConfig config = new IndexWriterConfig(org.apache.lucene.util.Version.LUCENE_43, new LD4LAnalyzer());
+	config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+	config.setRAMBufferSizeMB(500);
+	IndexWriter theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath)), config);
+
+	String[] requests = getSubauthorities();
+	logger.info("sites: " + arrayString(requests));
+	Directory indices[] = new Directory[requests.length];
+	for (int i = 0; i < requests.length; i++) {
+	    indices[i] = FSDirectory.open(new File(lucenePath+"_"+requests[i]));
+	}
+
+	logger.info("merging indices...");
+	logger.info("\tsource indices: " + arrayString(requests));
+	logger.info("\ttargetPath: " + lucenePath);
+	theWriter.addIndexes(indices);
+
+	theWriter.close();
+	logger.info("done");
+    }
+
     protected static void testing() {
 	logger.info(MethodHandles.lookup().lookupClass());
     }
@@ -155,6 +191,17 @@ public abstract class ThreadedIndexer {
 	}
 	
 	return buffer.toString().trim();
+    }
+    
+    protected static String arrayString(String[] array) {
+	if (array == null)
+	    return null;
+
+	StringBuffer result = new StringBuffer("[");
+	for (int i = 0; i < array.length; i++)
+	    result.append(" " + array[i]);
+	result.append(" ]");
+	return result.toString();
     }
     
     static int payloadCount = 0;
