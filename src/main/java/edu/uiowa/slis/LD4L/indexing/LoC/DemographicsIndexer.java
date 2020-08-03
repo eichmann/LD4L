@@ -29,11 +29,12 @@ public class DemographicsIndexer extends ThreadedIndexer implements Runnable {
 		    + " PREFIX getty: <http://vocab.getty.edu/ontology#> "
 		    + " PREFIX schema: <http://schema.org/> "
 		    + " PREFIX mads: <http://www.loc.gov/mads/rdf/v1#> "
+		    + " PREFIX loc: <http://id.loc.gov/vocabulary/identifiers/> "
 		    + " PREFIX bib: <http://bib.ld4l.org/ontology/> ";
 	String query =
 		"SELECT ?uri ?subject WHERE { "
 		+ "?uri skos:prefLabel ?subject . "
-    		+ "} ";
+    		+ "}";
 	queue(query);
 	instantiateWriter();
 	process(MethodHandles.lookup().lookupClass());
@@ -96,7 +97,7 @@ public class DemographicsIndexer extends ThreadedIndexer implements Runnable {
 			+ "?narrowURI skos:prefLabel ?narrower . " + "}",
 		"narrower", 1);
 
-//	 theDocument.add(new StoredField("payload", generatePayload("http://services.ld4l.org/ld4l_services/loc_demographics_lookup.jsp?uri=" + URI)));
+	 theDocument.add(new StoredField("payload", generatePayload(URI)));
 
 	theWriter.addDocument(theDocument);
 	count++;

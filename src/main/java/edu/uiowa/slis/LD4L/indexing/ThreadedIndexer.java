@@ -9,10 +9,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
+import org.apache.jena.query.ParameterizedSparqlString;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -20,6 +25,9 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.Syntax;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.tdb.TDBFactory;
 import org.apache.log4j.Logger;
 import org.apache.lucene.document.Document;
@@ -56,8 +64,7 @@ public abstract class ThreadedIndexer {
 	prop_file = PropertyLoader.loadProperties(propertyFileName);
 	tripleStore = prop_file.getProperty("tripleStore");
 	lucenePath = prop_file.getProperty("lucenePath");
-	stemming = Boolean.parseBoolean(prop_file.getProperty("stemming"));
-	
+	stemming = prop_file.getBooleanProperty("stemming");
 	dataset = TDBFactory.createDataset(tripleStore);
 
     }
@@ -96,7 +103,7 @@ public abstract class ThreadedIndexer {
     
     protected static void process(Class<?> theClass) throws Exception {
 	int maxCrawlerThreads = Runtime.getRuntime().availableProcessors();
-//	maxCrawlerThreads = 1;
+//	int maxCrawlerThreads = 1;
 	Thread[] scannerThreads = new Thread[maxCrawlerThreads];
 
 	for (int i = 0; i < maxCrawlerThreads; i++) {
@@ -151,36 +158,48 @@ public abstract class ThreadedIndexer {
     }
     
     static int payloadCount = 0;
-    protected static String generatePayload(String queryURL) throws MalformedURLException, IOException, InterruptedException {
+    protected static String generatePayload(String queryIRI) throws MalformedURLException, IOException, InterruptedException {
 	StringBuffer buffer = new StringBuffer();
-	boolean success = false;
-	
-//	if (++count % 1000 == 0)
-//	    Thread.sleep(2000);
-	
-	do {
-	    try {
-		URLConnection theIndexConnection = (new URL(queryURL)).openConnection();
-		BufferedReader IODesc = new BufferedReader(new InputStreamReader(theIndexConnection.getInputStream()));
 
-		String triple = null;
-		while ((triple = IODesc.readLine()) != null) {
-		    triple = triple.trim();
-		    logger.debug("\ttriple: " + triple);
-		    buffer.append(triple + "\n");
-		}
-		IODesc.close();
-		success = true;
-		if (buffer.length() == 0) {
-		    logger.error("*** empty payload returned - " + queryURL);
-		}
-	    } catch (Exception e) {
-		logger.error("*** Exception raised for query: " + queryURL);
-		success = false;
-		Thread.sleep(5000);
-	    } 
-	} while (!success);
+	ParameterizedSparqlString parameterizedString = new ParameterizedSparqlString(prefix + prop_file.getProperty("query"));
+	logger.debug("query: " + parameterizedString.toString());
+	parameterizedString.setIri(prop_file.getProperty("queryVariable"), queryIRI);
+	logger.debug("parameterized query: " + parameterizedString.toString());
+	Query theQuery = parameterizedString.asQuery();
+	QueryExecution qexec = QueryExecutionFactory.create(theQuery, dataset);
+	Model model = qexec.execConstruct();
+	model.listStatements();
+	for (Iterator<Statement> i = model.listStatements(); i.hasNext(); ) {
+	    Triple triple = i.next().asTriple();
+	    String tripleString = formatNode(triple.getSubject())  + " " + formatNode(triple.getPredicate()) + " " + formatNode(triple.getObject()) + " .";
+	    logger.debug("triple: " + tripleString);
+	    buffer.append(tripleString + "\n");
+	}
 	
 	return buffer.toString();
+    }
+    
+    static Hashtable<String,String> blankNodeHash = new Hashtable<String,String>();
+    static int blankNodeCount = 0;
+    
+    private static String formatNode(Node node) {
+	if (node.isLiteral()) {
+	    return "\""+node.getLiteral().toString().replace("\"", "\\\"").replace("\n", "\\n")+"\""+(node.getLiteral().language() == null || node.getLiteral().language().trim().length() == 0 ? "" : "@"+node.getLiteral().language().toLowerCase());
+	} else if (node.isBlank()) {
+	    return getBlankNodeLabel(node.toString());
+	} else {
+	    return "<"+node.toString()+">";
+	}
+    }
+    
+    private static String getBlankNodeLabel(String nodeLabel) {
+	String blankLabel = blankNodeHash.get(nodeLabel);
+	
+	if (blankLabel == null) {
+	    blankLabel = "_:b" + blankNodeCount++;
+	    blankNodeHash.put(nodeLabel, blankLabel);
+	}
+	
+	return blankLabel;
     }
 }
