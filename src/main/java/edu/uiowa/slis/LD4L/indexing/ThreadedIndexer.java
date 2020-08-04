@@ -48,7 +48,7 @@ public abstract class ThreadedIndexer {
     
     static String dataPath = null;
     static String lucenePath = null;
-    static String subauthority = null;
+    protected static String subauthority = null;
     protected static String prefix = null;
     private static Pattern datePattern = Pattern.compile("([0-9]{4})-([0-9]{4})");
     
@@ -249,4 +249,21 @@ public abstract class ThreadedIndexer {
 	
 	return blankLabel;
     }
+ 
+    protected static void annotateLoCName(String URI, Document theDocument, String predicate1, String predicate2) {
+	String query =
+		"SELECT ?value WHERE { "
+		+ "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#" + predicate1 + "> ?o . "
+		+ "?o <http://www.loc.gov/mads/rdf/v1#" + predicate2 + "> ?value . "
+    		+ "} ";
+	logger.debug("query: " + query);
+	ResultSet rs = getResultSet(query);
+	while (rs.hasNext()) {
+	    QuerySolution sol = rs.nextSolution();
+	    String value = sol.get("?value").asLiteral().getString();
+	    logger.debug("\tpredicate1: " + predicate1 + "\tvalue: " + value);
+	    theDocument.add(new TextField("content", retokenizeString(value, true), Field.Store.NO));
+	}	
+    }
+
 }
