@@ -124,7 +124,7 @@ public class RWOIndexer extends ThreadedIndexer implements Runnable {
 	ResultSet rs = getResultSet(prefix + query);
 	while (rs.hasNext()) {
 	    QuerySolution sol = rs.nextSolution();
-	    RWO = sol.get("?rwo").asLiteral().getString();
+	    RWO = sol.get("?rwo").toString();
 	    name = sol.get("?name").asLiteral().getString();
 	}
 	logger.info("[" + threadID + "] \tname: " + name);
