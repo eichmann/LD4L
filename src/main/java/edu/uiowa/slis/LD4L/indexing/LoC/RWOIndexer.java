@@ -102,22 +102,22 @@ public class RWOIndexer extends ThreadedIndexer implements Runnable {
 	String query = null;
 	switch (subauthority) {
 	case "organizations":
-	    query = "SELECT ?uri ?name ?rwo WHERE { "
-		    + "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
-		    + "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#CorporateName> . "
-		    + "?uri <http://www.loc.gov/mads/rdf/v1#identifiesRWO> ?rwo . " + "} ";
+	    query = "SELECT ?name ?rwo WHERE { "
+		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
+		    + "<" + URI + "> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#CorporateName> . "
+		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#identifiesRWO> ?rwo . " + "} ";
 	    break;
 	case "titles":
-	    query = "SELECT ?uri ?name ?rwo WHERE { "
-		    + "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
-		    + "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Title> . "
-		    + "?uri <http://www.loc.gov/mads/rdf/v1#identifiesRWO> ?rwo . " + "} ";
+	    query = "SELECT ?name ?rwo WHERE { "
+		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
+		    + "<" + URI + "> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Title> . "
+		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#identifiesRWO> ?rwo . " + "} ";
 	    break;
 	case "persons":
-	    query = "SELECT ?uri ?name ?rwo WHERE { "
-		    + "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
-		    + "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#PersonalName> . "
-		    + "?uri <http://www.loc.gov/mads/rdf/v1#identifiesRWO> ?rwo . " + "} ";
+	    query = "SELECT ?name ?rwo WHERE { "
+		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
+		    + "<" + URI + "> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#PersonalName> . "
+		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#identifiesRWO> ?rwo . " + "} ";
 	    break;
 	}
 	logger.trace("query: " + query);
