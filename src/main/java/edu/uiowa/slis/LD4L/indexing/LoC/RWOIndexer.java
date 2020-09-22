@@ -23,17 +23,7 @@ public class RWOIndexer extends ThreadedIndexer implements Runnable {
 	loadProperties("loc_rwo");
 	String[] subauthorities = getSubauthorities();
 	logger.info("subauthorities: " + arrayString(subauthorities));
-	prefix =    "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> "
-		    + " PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
-		    + " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
-		    + " PREFIX skos: <http://www.w3.org/2004/02/skos/core#> "
-		    + " PREFIX owl: <http://www.w3.org/2002/07/owl#> "
-		    + " PREFIX umls: <http://bioportal.bioontology.org/ontologies/umls/> "
-		    + " PREFIX getty: <http://vocab.getty.edu/ontology#> "
-		    + " PREFIX schema: <http://schema.org/> "
-		    + " PREFIX mads: <http://www.loc.gov/mads/rdf/v1#> "
-		    + " PREFIX loc: <http://id.loc.gov/vocabulary/identifiers/> "
-		    + " PREFIX bib: <http://bib.ld4l.org/ontology/> ";
+
 	for (String subauthority : subauthorities) {
 	    logger.info("");
 	    logger.info("indexing subauthority " + subauthority);

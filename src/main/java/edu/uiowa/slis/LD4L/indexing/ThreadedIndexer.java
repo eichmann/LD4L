@@ -49,8 +49,19 @@ public abstract class ThreadedIndexer {
     static String dataPath = null;
     static String lucenePath = null;
     protected static String subauthority = null;
-    protected static String prefix = null;
     private static Pattern datePattern = Pattern.compile("([0-9]{4})-([0-9]{4})");
+    protected static String prefix =   "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> "
+                        	    + " PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
+                        	    + " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
+                        	    + " PREFIX skos: <http://www.w3.org/2004/02/skos/core#> "
+                        	    + " PREFIX owl: <http://www.w3.org/2002/07/owl#> "
+                        	    + " PREFIX umls: <http://bioportal.bioontology.org/ontologies/umls/> "
+                        	    + " PREFIX getty: <http://vocab.getty.edu/ontology#> "
+                        	    + " PREFIX schema: <http://schema.org/> "
+                        	    + " PREFIX mads: <http://www.loc.gov/mads/rdf/v1#> "
+                        	    + " PREFIX loc: <http://id.loc.gov/vocabulary/identifiers/> "
+                        	    + " PREFIX bib: <http://bib.ld4l.org/ontology/> ";
+
     
     protected static IndexWriter theWriter = null;
     protected static Queue<String> uriQueue = new Queue<String>();
