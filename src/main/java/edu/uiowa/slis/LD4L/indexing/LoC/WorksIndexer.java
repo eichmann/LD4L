@@ -22,9 +22,9 @@ public class WorksIndexer extends ThreadedIndexer implements Runnable {
 	loadProperties("loc_works");
 
 	String query =
-		"SELECT ?uri ?label WHERE { "
+		"SELECT ?uri ?subject WHERE { "
 		+ "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://id.loc.gov/ontologies/bibframe/Work> . "
-		+ "?uri <http://www.w3.org/2000/01/rdf-schema#label> ?label . "
+		+ "?uri <http://www.w3.org/2000/01/rdf-schema#label> ?subject . "
     		+ "} ";
 	queue(query);
 	instantiateWriter();
