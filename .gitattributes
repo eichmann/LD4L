@@ -25,6 +25,9 @@ src/main/java/edu/uiowa/slis/LD4L/Sinopia/ValueConstraint.java -text
 src/main/java/edu/uiowa/slis/LD4L/SinopiaProfileLoader.java -text
 src/main/java/edu/uiowa/slis/LD4L/TripleLoader.java -text
 src/main/java/edu/uiowa/slis/LD4L/TripleStreamer.java -text
+src/main/java/edu/uiowa/slis/LD4L/indexing/CERL/CorporateIndexer.java -text
+src/main/java/edu/uiowa/slis/LD4L/indexing/CERL/ImprintIndexer.java -text
+src/main/java/edu/uiowa/slis/LD4L/indexing/CERL/PersonIndexer.java -text
 src/main/java/edu/uiowa/slis/LD4L/indexing/LoC/DemographicsIndexer.java -text
 src/main/java/edu/uiowa/slis/LD4L/indexing/LoC/GenreIndexer.java -text
 src/main/java/edu/uiowa/slis/LD4L/indexing/LoC/InstancesIndexer.java -text
@@ -35,6 +38,9 @@ src/main/java/edu/uiowa/slis/LD4L/indexing/LoC/SubjectsIndexer.java -text
 src/main/java/edu/uiowa/slis/LD4L/indexing/LoC/WorksIndexer.java -text
 src/main/java/edu/uiowa/slis/LD4L/indexing/Queue.java -text
 src/main/java/edu/uiowa/slis/LD4L/indexing/ThreadedIndexer.java -text
+src/main/java/edu/uiowa/slis/LD4L/indexing/general/LigatusIndexer.java -text
+src/main/java/edu/uiowa/slis/LD4L/indexing/general/MeSHIndexer.java -text
+src/main/java/edu/uiowa/slis/LD4L/indexing/general/RDAIndexer.java -text
 src/main/java/edu/uiowa/slis/LD4L/util/LocalProperties.java -text
 src/main/java/edu/uiowa/slis/LD4L/util/PropertyLoader.java -text
 src/main/resources/META-INF/taglib.tld -text

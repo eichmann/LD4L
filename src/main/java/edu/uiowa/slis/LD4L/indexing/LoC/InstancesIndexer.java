@@ -19,7 +19,7 @@ public class InstancesIndexer extends ThreadedIndexer implements Runnable {
 
     public static void main(String[] args) throws Exception {
 	PropertyConfigurator.configure("log4j.info");
-	loadProperties("loc_works");
+	loadProperties("loc_instances");
 
 	String query =
 		"SELECT ?uri ?subject WHERE { "
