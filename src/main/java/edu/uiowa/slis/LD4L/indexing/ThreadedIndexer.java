@@ -47,7 +47,8 @@ public abstract class ThreadedIndexer {
     static boolean stemming = false;
     
     static String dataPath = null;
-    static String lucenePath = null;
+    protected static String lucenePath = null;
+    static String altLucenePath = null;
     protected static String subauthority = null;
     private static Pattern datePattern = Pattern.compile("([0-9]{4})-([0-9]{4})");
     protected static String prefix =   "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> "
@@ -74,6 +75,14 @@ public abstract class ThreadedIndexer {
 	lucenePath = prop_file.getProperty("lucenePath");
 	stemming = prop_file.getBooleanProperty("stemming");
 	dataset = TDBFactory.createDataset(tripleStore);
+    }
+    
+    protected static void resetSubauthorities(String subauthorityString) {
+	subauthorities = subauthorityString.split("\\|");
+    }
+    
+    protected static void setAltLucenePath(String altPath) {
+	altLucenePath = altPath;
     }
     
     protected static String[] getSubauthorities() {
@@ -109,7 +118,7 @@ public abstract class ThreadedIndexer {
 	IndexWriterConfig config = new IndexWriterConfig(org.apache.lucene.util.Version.LUCENE_43, new LD4LAnalyzer());
 	config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 	config.setRAMBufferSizeMB(500);
-	IndexWriter theWriter = new IndexWriter(FSDirectory.open(new File(lucenePath)), config);
+	IndexWriter theWriter = new IndexWriter(FSDirectory.open(new File(altLucenePath == null ? lucenePath : altLucenePath)), config);
 
 	String[] requests = getSubauthorities();
 	logger.info("sites: " + arrayString(requests));
@@ -120,7 +129,7 @@ public abstract class ThreadedIndexer {
 
 	logger.info("merging indices...");
 	logger.info("\tsource indices: " + arrayString(requests));
-	logger.info("\ttargetPath: " + lucenePath);
+	logger.info("\ttargetPath: " + (altLucenePath == null ? lucenePath : altLucenePath));
 	theWriter.addIndexes(indices);
 
 	theWriter.close();
@@ -137,6 +146,10 @@ public abstract class ThreadedIndexer {
 	ResultSet rs = getResultSet(prefix + query);
 	while (rs.hasNext()) {
 	    QuerySolution sol = rs.nextSolution();
+	    
+	    if (sol.get("?subject") == null)
+		continue;
+	    
 	    String URI = sol.get("?uri").toString();
 	    String subject = sol.get("?subject").asLiteral().getString();
 	    
