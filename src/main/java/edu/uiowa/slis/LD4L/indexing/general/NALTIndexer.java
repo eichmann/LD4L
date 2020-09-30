@@ -22,12 +22,10 @@ public class NALTIndexer extends ThreadedIndexer implements Runnable {
 	loadProperties("nalt");
 
 	String query =
-		"SELECT DISTINCT ?uri ?label ?spanish WHERE { "
+		"SELECT DISTINCT ?uri ?subject WHERE { "
 		+ "?uri rdf:type skos:Concept . "
-		+ "?uri skos:prefLabel ?label . "
-		+ "?uri skos:prefLabel ?spanish . "
-		+ "FILTER (lang(?label) = 'en') "
-		+ "FILTER (lang(?spanish) = 'es') "
+		+ "?uri skos:prefLabel ?subject . "
+		+ "FILTER (lang(?subject) = 'en') "
     		+ "}";
 	queue(query);
 	instantiateWriter();
@@ -50,14 +48,14 @@ public class NALTIndexer extends ThreadedIndexer implements Runnable {
 		return;
 	    logger.info("[" + threadID + "] indexing: " + uri);
 	    try {
-		indexAgrovoc(uri);
+		indexNALT(uri);
 	    } catch (IOException | InterruptedException e) {
 		logger.error("Exception raised: " + e);
 	    }
 	}
     }
     
-    void indexAgrovoc(String URI) throws CorruptIndexException, IOException, InterruptedException {
+    void indexNALT(String URI) throws CorruptIndexException, IOException, InterruptedException {
 	String subject = null;
 	String spanish = null;
 	String query =
