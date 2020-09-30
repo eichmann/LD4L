@@ -19,7 +19,7 @@ public class ImprintIndexer extends ThreadedIndexer implements Runnable {
 
     public static void main(String[] args) throws Exception {
 	PropertyConfigurator.configure("log4j.info");
-	loadProperties("cerl_corporate");
+	loadProperties("cerl_imprint");
 
 	String query =
 		" SELECT DISTINCT ?uri ?subject where { "+
