@@ -61,8 +61,9 @@ public abstract class ThreadedIndexer {
                         	    + " PREFIX schema: <http://schema.org/> "
                         	    + " PREFIX mads: <http://www.loc.gov/mads/rdf/v1#> "
                         	    + " PREFIX loc: <http://id.loc.gov/vocabulary/identifiers/> "
-                        	    + " PREFIX bib: <http://bib.ld4l.org/ontology/> ";
-
+                        	    + " PREFIX bib: <http://bib.ld4l.org/ontology/> "
+                        	    + " PREFIX gn: <http://www.geonames.org/ontology#> ";
+    				
     
     protected static IndexWriter theWriter = null;
     protected static Queue<String> uriQueue = new Queue<String>();

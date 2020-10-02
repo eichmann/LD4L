@@ -40,6 +40,7 @@ src/main/java/edu/uiowa/slis/LD4L/indexing/Queue.java -text
 src/main/java/edu/uiowa/slis/LD4L/indexing/ThreadedIndexer.java -text
 src/main/java/edu/uiowa/slis/LD4L/indexing/general/AgrovocIndexer.java -text
 src/main/java/edu/uiowa/slis/LD4L/indexing/general/FASTIndexer.java -text
+src/main/java/edu/uiowa/slis/LD4L/indexing/general/GeoNamesIndexer.java -text
 src/main/java/edu/uiowa/slis/LD4L/indexing/general/GettyIndexer.java -text
 src/main/java/edu/uiowa/slis/LD4L/indexing/general/LigatusIndexer.java -text
 src/main/java/edu/uiowa/slis/LD4L/indexing/general/MeSHIndexer.java -text
