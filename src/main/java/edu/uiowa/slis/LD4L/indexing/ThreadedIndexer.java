@@ -43,6 +43,7 @@ public abstract class ThreadedIndexer {
     
     static Dataset dataset = null;
     protected static String tripleStore = null;
+    protected static String tripleStorePath = null;
     static String endpoint = null;
     static boolean stemming = false;
     
@@ -73,6 +74,7 @@ public abstract class ThreadedIndexer {
     protected static void loadProperties(String propertyFileName) {
 	prop_file = PropertyLoader.loadProperties(propertyFileName);
 	tripleStore = prop_file.getProperty("tripleStore");
+	tripleStorePath = prop_file.getProperty("tripleStorePath");
 	lucenePath = prop_file.getProperty("lucenePath");
 	stemming = prop_file.getBooleanProperty("stemming");
 	dataset = TDBFactory.createDataset(tripleStore);
@@ -101,6 +103,8 @@ public abstract class ThreadedIndexer {
     
     protected static void setSubauthority(String candidate) {
 	subauthority = candidate;
+	if (tripleStorePath != null)
+	    dataset = TDBFactory.createDataset(tripleStorePath + "/" + subauthority);
     }
     
     protected static void instantiateWriter() throws IOException {
@@ -166,6 +170,7 @@ public abstract class ThreadedIndexer {
 	int maxCrawlerThreads = Runtime.getRuntime().availableProcessors();
 //	int maxCrawlerThreads = 1;
 	Thread[] scannerThreads = new Thread[maxCrawlerThreads];
+	count =  0;
 
 	for (int i = 0; i < maxCrawlerThreads; i++) {
 	    logger.info("starting thread " + i);
