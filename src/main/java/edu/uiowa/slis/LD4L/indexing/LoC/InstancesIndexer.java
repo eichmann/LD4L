@@ -35,7 +35,7 @@ public class InstancesIndexer extends ThreadedIndexer implements Runnable {
     int threadID = 0;
     
     public InstancesIndexer(int threadID) {
-	logger.info("WorksIndexer thread: " + threadID);
+	logger.info("InstancesIndexer thread: " + threadID);
 	this.threadID = threadID;
     }
 
