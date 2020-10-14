@@ -25,6 +25,8 @@ public class NamesIndexer extends ThreadedIndexer implements Runnable {
 	logger.info("subauthorities: " + arrayString(subauthorities));
 
 	for (String subauthority : subauthorities) {
+	    if (args.length > 0 && !args[0].equals(subauthority))
+		continue;
 	    logger.info("");
 	    logger.info("indexing subauthority " + subauthority);
 	    logger.info("");
@@ -49,16 +51,36 @@ public class NamesIndexer extends ThreadedIndexer implements Runnable {
 			+ "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#PersonalName> . "
 			+ "} ";
 		break;
+	    case "family":
+		query = "SELECT ?uri ?subject WHERE { "
+			+ "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?subject . "
+			+ "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#FamilyName> . "
+			+ "} ";
+		break;
+	    case "geographic":
+		query = "SELECT ?uri ?subject WHERE { "
+			+ "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?subject . "
+			+ "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Geographic> . "
+			+ "} ";
+		break;
+	    case "conference":
+		query = "SELECT ?uri ?subject WHERE { "
+			+ "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?subject . "
+			+ "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#ConferenceName> . "
+			+ "} ";
+		break;
 	    }
 	    queue(query);
 	    instantiateWriter();
 	    process(MethodHandles.lookup().lookupClass());
 	    closeWriter();
 	}
-	logger.info("");
-	logger.info("merging subauthorities...");
-	logger.info("");
-	mergeSubauthorities();
+	if (args.length > 0 && args[0].equals("-merge")) {
+	    logger.info("");
+	    logger.info("merging subauthorities...");
+	    logger.info("");
+	    mergeSubauthorities();
+	}
     }
 
     int threadID = 0;
@@ -93,7 +115,7 @@ public class NamesIndexer extends ThreadedIndexer implements Runnable {
 		    + "<" + URI + "> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#CorporateName> . " + "} ";
 	    break;
 	case "titles":
-	    query = "SELECT ?name WHERE { "
+	    query = "SELECT ?name WHERE { "	
 		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
 		    + "<" + URI + "> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Title> . " + "} ";
 	    break;
@@ -101,6 +123,24 @@ public class NamesIndexer extends ThreadedIndexer implements Runnable {
 	    query = "SELECT ?name WHERE { "
 		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
 		    + "<" + URI + "> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#PersonalName> . " + "} ";
+	    break;
+	case "family":
+	    query = "SELECT ?name WHERE { "
+		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
+		    + "<" + URI + "> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#FamilyName> . "
+		    + "} ";
+	    break;
+	case "geographic":
+	    query = "SELECT ?name WHERE { "
+		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
+		    + "<" + URI + "> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Geographic> . "
+		    + "} ";
+	    break;
+	case "conference":
+	    query = "SELECT ?name WHERE { "
+		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
+		    + "<" + URI + "> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#ConferenceName> . "
+		    + "} ";
 	    break;
 	}
 	logger.trace("query: " + query);
