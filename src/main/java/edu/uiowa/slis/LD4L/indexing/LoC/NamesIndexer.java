@@ -154,6 +154,7 @@ public class NamesIndexer extends ThreadedIndexer implements Runnable {
 	Document theDocument = new Document();
 	theDocument.add(new StringField("uri", URI, Field.Store.YES));
 	theDocument.add(new StringField("name", name, Field.Store.YES));
+	theDocument.add(new TextField("prefcontent", retokenizeString(name, true), Field.Store.NO));
 	theDocument.add(new TextField("content", retokenizeString(name, true), Field.Store.NO));
 	annotateLoCName(URI, theDocument, "hasVariant", "variantLabel");
 	annotateLoCName(URI, theDocument, "fieldOfActivity", "label");

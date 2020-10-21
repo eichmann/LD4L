@@ -82,27 +82,35 @@ public class GenreIndexer extends ThreadedIndexer implements Runnable {
     }
     
     void indexLoCGenre(String URI) throws CorruptIndexException, IOException, InterruptedException {
-	String subject = null;
-	String query = deprecated ?
-		    "SELECT ?subject WHERE { "
-		    + "?uri <http://www.loc.gov/mads/rdf/v1#variantLabel> ?subject . "
-		    + "} "
-		:
-		    "SELECT ?subject WHERE { "
-		    + "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?subject . "
+	String name = null;
+	String query = null;
+	switch (subauthority) {
+	case "active":
+	    query = "SELECT ?subject WHERE { "
+		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?subject . "
 		    + "} ";
+	    break;
+	case "deprecated":
+	    query = "SELECT ?subject WHERE { "
+		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#variantLabel> ?subject . "
+		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#adminMetadata> ?stat . "
+		    + "?stat <http://id.loc.gov/ontologies/RecordInfo#recordStatus> \"deprecated\" . "
+		    + "} ";
+	    break;
+	}
 	logger.trace("query: " + query);
 	ResultSet rs = getResultSet(prefix + query);
 	while (rs.hasNext()) {
 	    QuerySolution sol = rs.nextSolution();
-	    subject = sol.get("?subject").asLiteral().getString();
+	    name = sol.get("?subject").asLiteral().getString();
 	}
-	logger.info("\tprefLabel: " + subject);
+	logger.info("\tprefLabel: " + name);
 
 	Document theDocument = new Document();
 	theDocument.add(new StringField("uri", URI, Field.Store.YES));
-	theDocument.add(new StringField("name", subject, Field.Store.YES));
-	theDocument.add(new TextField("content", retokenizeString(subject, true), Field.Store.NO));
+	theDocument.add(new StringField("name", name, Field.Store.YES));
+	theDocument.add(new TextField("prefcontent", retokenizeString(name, true), Field.Store.NO));
+	theDocument.add(new TextField("content", retokenizeString(name, true), Field.Store.NO));
 
 	String query1 = "SELECT DISTINCT ?altlabel WHERE { " + "<" + URI + "> skos:altLabel ?altlabel . " + "}";
 	ResultSet prs = getResultSet(prefix + query1);

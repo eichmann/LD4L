@@ -52,6 +52,20 @@ public class RWOIndexer extends ThreadedIndexer implements Runnable {
 			+ "?uri <http://www.loc.gov/mads/rdf/v1#identifiesRWO> ?rwo . "
 			+ "} ";
 		break;
+	    case "family":
+		query = "SELECT ?uri ?subject ?rwo WHERE { "
+			+ "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?subject . "
+			+ "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#FamilyName> . "
+			+ "?uri <http://www.loc.gov/mads/rdf/v1#identifiesRWO> ?rwo . "
+			+ "} ";
+		break;
+	    case "geographic":
+		query = "SELECT ?uri ?subject ?rwo WHERE { "
+			+ "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?subject . "
+			+ "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Geographic> . "
+			+ "?uri <http://www.loc.gov/mads/rdf/v1#identifiesRWO> ?rwo . "
+			+ "} ";
+		break;
 	    }
 	    queue(query);
 	    instantiateWriter();
@@ -109,6 +123,18 @@ public class RWOIndexer extends ThreadedIndexer implements Runnable {
 		    + "<" + URI + "> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#PersonalName> . "
 		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#identifiesRWO> ?rwo . " + "} ";
 	    break;
+	case "family":
+	    query = "SELECT ?name ?rwo WHERE { "
+		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
+		    + "<" + URI + "> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#FamilyName> . "
+		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#identifiesRWO> ?rwo . " + "} ";
+	    break;
+	case "geographic":
+	    query = "SELECT ?name ?rwo WHERE { "
+		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
+		    + "<" + URI + "> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Geographic> . "
+		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#identifiesRWO> ?rwo . " + "} ";
+	    break;
 	}
 	logger.trace("query: " + query);
 	ResultSet rs = getResultSet(prefix + query);
@@ -123,6 +149,7 @@ public class RWOIndexer extends ThreadedIndexer implements Runnable {
 	theDocument.add(new StringField("uri", RWO, Field.Store.YES));
 	theDocument.add(new StringField("name", name, Field.Store.YES));
 	theDocument.add(new TextField("content", retokenizeString(name, true), Field.Store.NO));
+	theDocument.add(new TextField("prefcontent", retokenizeString(name, true), Field.Store.NO));
 	annotateLoCName(URI, theDocument, "hasVariant", "variantLabel");
 //	annotateLoCName(URI, theDocument, "fieldOfActivity", "label");
 //	annotateLoCName(URI, theDocument, "fieldOfActivity", "authoritativeLabel");
