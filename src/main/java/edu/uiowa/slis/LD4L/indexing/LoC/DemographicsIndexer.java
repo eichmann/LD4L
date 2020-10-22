@@ -86,6 +86,11 @@ public class DemographicsIndexer extends ThreadedIndexer implements Runnable {
 			+ "> <http://www.w3.org/2004/02/skos/core#narrower> ?narrowURI . "
 			+ "?narrowURI skos:prefLabel ?narrower . " + "}",
 		"narrower", 1);
+	addWeightedField(theDocument,
+		"SELECT DISTINCT ?related WHERE { " + "<" + URI
+			+ "> <http://www.w3.org/2004/02/skos/core#related> ?relatedURI . "
+			+ "?relatedURI skos:prefLabel ?related . " + "}",
+		"related", 1);
 
 	 theDocument.add(new StoredField("payload", generatePayload(URI)));
 
