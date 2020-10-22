@@ -25,6 +25,8 @@ public class GenreIndexer extends ThreadedIndexer implements Runnable {
 	logger.info("subauthorities: " + arrayString(subauthorities));
 
 	for (String subauthority : subauthorities) {
+	    if (args.length > 0 && !args[0].equals(subauthority))
+		continue;
 	    logger.info("");
 	    logger.info("indexing subauthority " + subauthority);
 	    logger.info("");
@@ -53,10 +55,12 @@ public class GenreIndexer extends ThreadedIndexer implements Runnable {
 	    process(MethodHandles.lookup().lookupClass());
 	    closeWriter();
 	}
-	logger.info("");
-	logger.info("merging subauthorities...");
-	logger.info("");
-	mergeSubauthorities();
+	if (args.length == 0 || (args.length > 0 && args[0].equals("-merge"))) {
+	    logger.info("");
+	    logger.info("merging subauthorities...");
+	    logger.info("");
+	    mergeSubauthorities();
+	}
     }
 
     int threadID = 0;

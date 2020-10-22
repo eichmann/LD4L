@@ -75,7 +75,7 @@ public class NamesIndexer extends ThreadedIndexer implements Runnable {
 	    process(MethodHandles.lookup().lookupClass());
 	    closeWriter();
 	}
-	if (args.length > 0 && args[0].equals("-merge")) {
+	if (args.length == 0 || (args.length > 0 && args[0].equals("-merge"))) {
 	    logger.info("");
 	    logger.info("merging subauthorities...");
 	    logger.info("");
