@@ -71,8 +71,13 @@ public class SubjectsIndexer extends ThreadedIndexer implements Runnable {
 	    theDocument.add(new StringField("uri", URI, Field.Store.YES));
 	    theDocument.add(new StringField("name", subject, Field.Store.YES));
 	    theDocument.add(new TextField("content", retokenizeString(subject, true), Field.Store.NO));
+	    theDocument.add(new TextField("prefcontent", retokenizeString(subject, true), Field.Store.NO));
 
-	 theDocument.add(new StoredField("payload", generatePayload(URI)));
+	    addWeightedField(theDocument,
+		    "SELECT DISTINCT ?altlabel WHERE { " + "<" + URI + "> skos:altLabel ?altlabel . " + "}",
+		    "altlabel", 1);
+
+	    theDocument.add(new StoredField("payload", generatePayload(URI)));
 
 	theWriter.addDocument(theDocument);
 	count++;

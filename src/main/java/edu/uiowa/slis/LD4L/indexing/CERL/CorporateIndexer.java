@@ -73,6 +73,7 @@ public class CorporateIndexer extends ThreadedIndexer implements Runnable {
 	theDocument.add(new StringField("uri", URI, Field.Store.YES));
 	theDocument.add(new StringField("name", subject, Field.Store.YES));
 	theDocument.add(new TextField("content", retokenizeString(subject, true), Field.Store.NO));
+	theDocument.add(new TextField("prefcontent", retokenizeString(subject, true), Field.Store.NO));
 
 	    String query2 = 
 		  "SELECT DISTINCT ?altlabel WHERE { "

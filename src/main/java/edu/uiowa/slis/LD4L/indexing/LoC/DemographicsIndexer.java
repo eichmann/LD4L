@@ -70,8 +70,8 @@ public class DemographicsIndexer extends ThreadedIndexer implements Runnable {
 	Document theDocument = new Document();
 	theDocument.add(new StringField("uri", URI, Field.Store.YES));
 	theDocument.add(new StringField("name", subject, Field.Store.YES));
-	for (int i = 0; i < 10; i++) // result weighting hack
-	    theDocument.add(new TextField("content", retokenizeString(subject, true), Field.Store.NO));
+	theDocument.add(new TextField("content", retokenizeString(subject, true), Field.Store.NO));
+	theDocument.add(new TextField("prefcontent", retokenizeString(subject, true), Field.Store.NO));
 
 	addWeightedField(theDocument,
 		"SELECT DISTINCT ?altlabel WHERE { " + "<" + URI + "> skos:altLabel ?altlabel . " + "}",

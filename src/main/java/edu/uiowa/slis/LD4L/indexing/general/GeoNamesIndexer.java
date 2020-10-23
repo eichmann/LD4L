@@ -122,6 +122,7 @@ public class GeoNamesIndexer extends ThreadedIndexer implements Runnable {
 	theDocument.add(new StringField("uri", URI, Field.Store.YES));
 	theDocument.add(new StringField("name", name, Field.Store.YES));
 	theDocument.add(new TextField("content", retokenizeString(name, true), Field.Store.NO));
+	theDocument.add(new TextField("prefcontent", retokenizeString(name, true), Field.Store.NO));
 
 	    indexVariant(theDocument, URI, "alternateName");
 	    indexVariant(theDocument, URI, "officialName");

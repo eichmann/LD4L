@@ -119,6 +119,7 @@ public class GettyIndexer extends ThreadedIndexer implements Runnable {
 	theDocument.add(new StringField("uri", URI, Field.Store.YES));
 	theDocument.add(new StringField("name", name, Field.Store.YES));
 	theDocument.add(new TextField("content", retokenizeString(name, true), Field.Store.NO));
+	theDocument.add(new TextField("prefcontent", retokenizeString(name, true), Field.Store.NO));
 
 	    String query1 = 
 		  "SELECT DISTINCT ?preflabel WHERE { "
@@ -130,6 +131,7 @@ public class GettyIndexer extends ThreadedIndexer implements Runnable {
 		String preflabel = psol.get("?preflabel").asLiteral().getString();
 		logger.info("\tpref label: " + preflabel);
 		theDocument.add(new TextField("content", retokenizeString(preflabel, true), Field.Store.NO));
+		theDocument.add(new TextField("prefcontent", retokenizeString(preflabel, true), Field.Store.NO));
 	    }
 	    
 	    String query2 = 
