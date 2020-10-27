@@ -114,6 +114,18 @@ public class RDAIndexer extends ThreadedIndexer implements Runnable {
 		theDocument.add(new TextField("content", retokenizeString(altname, true), Field.Store.NO));
 	    }
 
+	    String query3 = 
+		  "SELECT DISTINCT ?def WHERE { "
+		+ "<" + URI + "> <http://www.w3.org/2004/02/skos/core#definition> ?def . "
+		+ "}";
+	    ars = getResultSet(prefix + query3);
+	    while (ars.hasNext()) {
+		QuerySolution asol = ars.nextSolution();
+		String definition = asol.get("?def").asLiteral().getString();
+		logger.info("\t\tdefinition: " + definition);
+		theDocument.add(new TextField("content", retokenizeString(definition, true), Field.Store.NO));
+	    }
+
 	theDocument.add(new StoredField("payload", generatePayload(URI)));
 
 	theWriter.addDocument(theDocument);
