@@ -21,6 +21,14 @@ public class PersonIndexer extends ThreadedIndexer implements Runnable {
 	PropertyConfigurator.configure("log4j.info");
 	loadProperties("cerl_person");
 
+	if (args.length > 0 && args[0].equals("-merge")) {
+	    logger.info("");
+	    logger.info("merging subauthorities...");
+	    logger.info("");
+	    mergeSubauthorities();
+	    return;
+	}
+
 	String query =
 		" SELECT DISTINCT ?uri ?subject where { "+
 		"  ?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdvocab.info/uri/schema/FRBRentitiesRDA/Person> . "+
