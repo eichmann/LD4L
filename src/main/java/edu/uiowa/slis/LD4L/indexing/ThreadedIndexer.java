@@ -261,7 +261,7 @@ public abstract class ThreadedIndexer {
     
     private static String formatNode(Node node) {
 	if (node.isLiteral()) {
-	    return "\""+node.getLiteral().toString().replace("\"", "\\\"").replace("\n", "\\n")+"\""+(node.getLiteral().language() == null || node.getLiteral().language().trim().length() == 0 ? "" : "@"+node.getLiteral().language().toLowerCase());
+	    return "\""+node.getLiteral().toString().replaceAll("\\r","").replace("\"", "\\\"").replace("\n", "\\n")+"\""+(node.getLiteral().language() == null || node.getLiteral().language().trim().length() == 0 ? "" : "@"+node.getLiteral().language().toLowerCase());
 	} else if (node.isBlank()) {
 	    return getBlankNodeLabel(node.toString());
 	} else {
