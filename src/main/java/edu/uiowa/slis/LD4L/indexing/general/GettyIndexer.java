@@ -25,50 +25,65 @@ public class GettyIndexer extends ThreadedIndexer implements Runnable {
 	logger.info("subauthorities: " + arrayString(subauthorities));
 
 	for (String subauthority : subauthorities) {
+	    if (args.length > 0 && !args[0].equals(subauthority))
+	    	continue;
 	    logger.info("");
 	    logger.info("indexing subauthority " + subauthority);
 	    logger.info("");
 	    setSubauthority(subauthority);
-	    String query = 
-			"SELECT DISTINCT ?uri ?subject  WHERE { "
+	    String query = subauthority.equals("aat") ?
+				"SELECT DISTINCT ?uri ?subject  WHERE { "
+					+ "?uri rdf:type " + map(subauthority) + " . "
+					+ "  OPTIONAL { ?uri skos:prefLabel ?labelUS  FILTER (lang(?labelUS) = \"en-us\") } "
+					+ "  OPTIONAL { ?uri skos:prefLabel ?labelENG FILTER (lang(?labelENG) = \"en\") } "
+					+ "  OPTIONAL { ?uri skos:prefLabel ?labelNUL FILTER (lang(?labelNUL) = \"\") } "
+					+ "  OPTIONAL { ?uri skos:prefLabel ?labelANY FILTER (lang(?labelANY) != \"\") } "
+					+ "  BIND(COALESCE(?labelUS, ?labelENG, ?labelNUL, ?labelANY ) as ?subject) "
+					+ "}"
+				:
+				"SELECT DISTINCT ?uri ?subject  WHERE { "
 				+ "?uri rdf:type " + map(subauthority) + " . "
-				+ "  OPTIONAL { ?uri skos:prefLabel ?labelUS  FILTER (lang(?labelUS) = \"en-us\") } "
-				+ "  OPTIONAL { ?uri skos:prefLabel ?labelENG FILTER (lang(?labelENG) = \"en\") } "
-				+ "  OPTIONAL { ?uri skos:prefLabel ?labelNUL FILTER (lang(?labelNUL) = \"\") } "
-				+ "  OPTIONAL { ?uri skos:prefLabel ?labelANY FILTER (lang(?labelANY) != \"\") } "
+				+ "?urix foaf:focus ?uri . "
+				+ "  OPTIONAL { ?urix xl:prefLabel ?xl. ?xl xl:literalForm ?labelUS  FILTER (lang(?labelUS) = \"en-us\") } "
+				+ "  OPTIONAL { ?urix xl:prefLabel ?xl. ?xl xl:literalForm  ?labelENG FILTER (lang(?labelENG) = \"en\") } "
+				+ "  OPTIONAL { ?urix xl:prefLabel ?xl. ?xl xl:literalForm  ?labelNUL FILTER (lang(?labelNUL) = \"\") } "
+				+ "  OPTIONAL { ?urix xl:prefLabel ?xl. ?xl xl:literalForm  ?labelANY FILTER (lang(?labelANY) != \"\") } "
 				+ "  BIND(COALESCE(?labelUS, ?labelENG, ?labelNUL, ?labelANY ) as ?subject) "
-				+ "}";
+				+ "}"
+				;
 	    queue(query);
 	    instantiateWriter();
 	    process(MethodHandles.lookup().lookupClass());
 	    closeWriter();
 	}
-	
-	// create the full merged index
-	logger.info("");
-	logger.info("merging subauthorities...");
-	logger.info("");
-	mergeSubauthorities();
-	
-	// create the ULAN-specific index
-	logger.info("");
-	logger.info("merging ULAN subauthorities...");
-	logger.info("");
-	resetSubauthorities("ulan_person|ulan_organization");
-	setAltLucenePath(lucenePath + "_ulan");
-	mergeSubauthorities();
+	if (args.length == 0 || (args.length > 0 && args[0].equals("-merge"))) {
+	    logger.info("");
+	    logger.info("merging subauthorities...");
+	    logger.info("");
+	    mergeSubauthorities();
+		
+		// create the ULAN-specific index
+		logger.info("");
+		logger.info("merging ULAN subauthorities...");
+		logger.info("");
+		resetSubauthorities("ulan_person|ulan_organization|ulan_place");
+		setAltLucenePath(lucenePath + "_ulan");
+		mergeSubauthorities();
+	}
     }
     
     static String map(String subauthority) {
 	switch(subauthority) {
 	case "aat":
-	    return "getty:Concept";
+	    return "skos:Concept";
 	case "tgn":
-	    return "getty:PhysPlaceConcept";
+	    return "schema:Place";
 	case "ulan_person":
-	    return "getty:PersonConcept";
+	    return "schema:Person";
 	case "ulan_organization":
-	    return "getty:GroupConcept";
+	    return "schema:Organization";
+	case "ulan_place":
+	    return "schema:Place";
 	default:
 	    return "";
 	}
@@ -98,7 +113,7 @@ public class GettyIndexer extends ThreadedIndexer implements Runnable {
     
     void indexGetty(String URI) throws CorruptIndexException, IOException, InterruptedException {
 	String name = null;
-	String query = 
+	String query = subauthority.equals("aat") ?
 		"SELECT DISTINCT ?name  WHERE { "
 			+ "<" + URI + "> rdf:type " + map(subauthority) + " . "
 			+ "  OPTIONAL { <" + URI + "> skos:prefLabel ?labelUS  FILTER (lang(?labelUS) = \"en-us\") } "
@@ -106,7 +121,18 @@ public class GettyIndexer extends ThreadedIndexer implements Runnable {
 			+ "  OPTIONAL { <" + URI + "> skos:prefLabel ?labelNUL FILTER (lang(?labelNUL) = \"\") } "
 			+ "  OPTIONAL { <" + URI + "> skos:prefLabel ?labelANY FILTER (lang(?labelANY) != \"\") } "
 			+ "  BIND(COALESCE(?labelUS, ?labelENG, ?labelNUL, ?labelANY ) as ?name) "
-			+ "}";
+			+ "}"
+			:
+			"SELECT DISTINCT ?name  WHERE { "
+			+ "<" + URI + "> rdf:type " + map(subauthority) + " . "
+			+ "?urix foaf:focus <" + URI + "> . "
+			+ "  OPTIONAL { ?urix xl:prefLabel ?xl. ?xl xl:literalForm  ?labelUS  FILTER (lang(?labelUS) = \"en-us\") } "
+			+ "  OPTIONAL { ?urix xl:prefLabel ?xl. ?xl xl:literalForm  ?labelENG FILTER (lang(?labelENG) = \"en\") } "
+			+ "  OPTIONAL { ?urix xl:prefLabel ?xl. ?xl xl:literalForm  ?labelNUL FILTER (lang(?labelNUL) = \"\") } "
+			+ "  OPTIONAL { ?urix xl:prefLabel ?xl. ?xl xl:literalForm  ?labelANY FILTER (lang(?labelANY) != \"\") } "
+			+ "  BIND(COALESCE(?labelUS, ?labelENG, ?labelNUL, ?labelANY ) as ?name) "
+			+ "}"
+			;
 	logger.trace("query: " + query);
 	ResultSet rs = getResultSet(prefix + query);
 	while (rs.hasNext()) {
@@ -121,10 +147,16 @@ public class GettyIndexer extends ThreadedIndexer implements Runnable {
 	theDocument.add(new TextField("content", retokenizeString(name, true), Field.Store.NO));
 	theDocument.add(new TextField("prefcontent", retokenizeString(name, true), Field.Store.NO));
 
-	    String query1 = 
-		  "SELECT DISTINCT ?preflabel WHERE { "
+	    String query1 = subauthority.equals("aat") ?
+	  		  "SELECT DISTINCT ?preflabel WHERE { "
 			  + "<" + URI + "> skos:prefLabel ?preflabel . "
-		+ "}";
+		+ "}"
+		:
+			  "SELECT DISTINCT ?preflabel WHERE { "
+				+ "?urix foaf:focus <" + URI + "> . "
+			  + "?urix xl:prefLabel ?xl. ?xl xl:literalForm ?preflabel . "
+		+ "}"
+		;
 	    ResultSet prs = getResultSet(prefix + query1);
 	    while (prs.hasNext()) {
 		QuerySolution psol = prs.nextSolution();
@@ -134,16 +166,79 @@ public class GettyIndexer extends ThreadedIndexer implements Runnable {
 		theDocument.add(new TextField("prefcontent", retokenizeString(preflabel, true), Field.Store.NO));
 	    }
 	    
-	    String query2 = 
+	    String query2 = subauthority.equals("aat") ?
 		  "SELECT DISTINCT ?altlabel WHERE { "
 			  + "<" + URI + "> skos:altLabel ?altlabel . "
-		+ "}";
+		+ "}"
+		:
+			  "SELECT DISTINCT ?altlabel WHERE { "
+				+ "?urix foaf:focus <" + URI + "> . "
+			  + "?urix xl:altLabel ?xl. ?xl xl:literalForm  ?altlabel . "
+		+ "}"
+		;
 	    ResultSet ars = getResultSet(prefix + query2);
 	    while (ars.hasNext()) {
 		QuerySolution asol = ars.nextSolution();
 		String altlabel = asol.get("?altlabel").asLiteral().getString();
 		logger.info("\talt label: " + altlabel);
 		theDocument.add(new TextField("content", retokenizeString(altlabel, true), Field.Store.NO));
+	    }
+	    
+	    if (subauthority.equals("tgn")) {
+		    String query3 = 
+		  		  "SELECT DISTINCT ?label WHERE { "
+		  			  + "?urix foaf:focus <" + URI + "> . "
+		  			  + "?urix gvp:parentString ?label . "
+		  		+ "}"
+		  		;
+		    ResultSet rs3 = getResultSet(prefix + query3);
+			while (rs3.hasNext()) {
+				QuerySolution asol = rs3.nextSolution();
+				String altlabel = asol.get("?label").asLiteral().getString();
+				logger.info("\tlabel1: " + altlabel);
+				theDocument.add(new TextField("content", retokenizeString(altlabel, true), Field.Store.NO));
+			}
+		    query3 = 
+			  		  "SELECT DISTINCT ?label WHERE { "
+			  			  + "?urix foaf:focus <" + URI + "> . "
+			  			  + "?urix gvp:parentStringAbbrev ?label . "
+			  		+ "}"
+			  		;
+			rs3 = getResultSet(prefix + query3);
+			while (rs3.hasNext()) {
+				QuerySolution asol = rs3.nextSolution();
+				String altlabel = asol.get("?label").asLiteral().getString();
+				logger.info("\tlabel2: " + altlabel);
+				theDocument.add(new TextField("content", retokenizeString(altlabel, true), Field.Store.NO));
+			}
+		    query3 = 
+			  		  "SELECT DISTINCT ?label WHERE { "
+			  			  + "?urix foaf:focus <" + URI + "> . "
+			  			  + "?urix gvp:broaderPreferred ?x. "
+			  			  + "?x skos:prefLabel ?label . "
+			  		+ "}"
+			  		;
+			rs3 = getResultSet(prefix + query3);
+			while (rs3.hasNext()) {
+				QuerySolution asol = rs3.nextSolution();
+				String altlabel = asol.get("?label").asLiteral().getString();
+				logger.info("\tlabel3: " + altlabel);
+				theDocument.add(new TextField("content", retokenizeString(altlabel, true), Field.Store.NO));
+			}
+		    query3 = 
+			  		  "SELECT DISTINCT ?label WHERE { "
+			  			  + "?urix foaf:focus <" + URI + "> . "
+			  			  + "?urix gvp:broaderPreferred ?x. "
+			  			  + "?x skos:altLabel ?label . "
+			  		+ "}"
+			  		;
+			rs3 = getResultSet(prefix + query3);
+			while (rs3.hasNext()) {
+				QuerySolution asol = rs3.nextSolution();
+				String altlabel = asol.get("?label").asLiteral().getString();
+				logger.info("\tlabel4: " + altlabel);
+				theDocument.add(new TextField("content", retokenizeString(altlabel, true), Field.Store.NO));
+			}
 	    }
 
 	theDocument.add(new StoredField("payload", generatePayload(URI)));
