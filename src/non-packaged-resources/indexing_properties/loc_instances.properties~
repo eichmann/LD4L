@@ -1,0 +1,9 @@
+tripleStore: /Volumes/Pegasus0/LoC/works_instances
+#lucenePath: /Volumes/Pegasus0/LD4L/lucene/LoC/subjects
+lucenePath: lucene/loc/instance
+stemming: true
+queryVariable: s
+query: \
+	CONSTRUCT { ?s ?p ?o } WHERE { \n\
+		?s ?p ?o . \n\
+	} \n\

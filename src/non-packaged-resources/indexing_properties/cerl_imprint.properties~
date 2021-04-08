@@ -1,0 +1,23 @@
+tripleStore: /Volumes/Pegasus0/CERL
+#lucenePath: /Volumes/Pegasus0/LD4L/lucene/LoC/performance
+lucenePath: lucene/cerl/corporate
+stemming: true
+queryVariable: s
+query: \
+    CONSTRUCT { ?s ?p ?o . ?s <http://www.cerl.org/namespaces/thesaurus/signOrDevice> ?sign . ?sign <http://www.cerl.org/namespaces/thesaurus/hasDescription> ?desc . ?s <http://www.cerl.org/namespaces/thesaurus/locationOfActivity> ?loc . ?loc <http://www.cerl.org/namespaces/thesaurus/hasPlace> ?addr . ?addr <http://rdvocab.info/ElementsGr3/nameOfThePlace> ?name } WHERE { \n\
+	    { \n\
+	      ?s ?p ?o . \n\
+	      ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.cerl.org/namespaces/thesaurus/ImprintName> . \n\
+	    } \n\
+    UNION \n\
+    	{ \n\
+          ?s <http://www.cerl.org/namespaces/thesaurus/signOrDevice> ?sign . \n\
+	      ?sign <http://www.cerl.org/namespaces/thesaurus/hasDescription> ?desc . \n\
+    	} \n\
+    UNION \n\
+        { \n\
+          ?s <http://www.cerl.org/namespaces/thesaurus/locationOfActivity> ?loc . \n\
+	      ?loc <http://www.cerl.org/namespaces/thesaurus/hasPlace> ?addr . \n\
+	      ?addr <http://rdvocab.info/ElementsGr3/nameOfThePlace> ?name . \n\
+        } \n\
+    } \n\

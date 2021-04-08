@@ -241,7 +241,8 @@ public class GettyIndexer extends ThreadedIndexer implements Runnable {
 			}
 	    }
 
-	theDocument.add(new StoredField("payload", generatePayload(URI)));
+	theDocument.add(new StoredField("payload", generateSubauthorityPayload(URI, subauthority)));
+	logger.debug("");
 
 	theWriter.addDocument(theDocument);
 	if (++count % 100000 == 0)

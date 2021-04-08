@@ -1,0 +1,9 @@
+tripleStore: /usr/local/RAID/LoC/works_instances
+#lucenePath: /Volumes/Pegasus0/LD4L/lucene/LoC/subjects
+lucenePath: /usr/local/RAID/LD4L/lucene/loc/work
+stemming: true
+queryVariable: s
+query: \
+	SELECT DISTINCT ?p ?o WHERE { \n\
+		?s ?p ?o \n\
+	}\n\

@@ -1,0 +1,119 @@
+tripleStore: /Volumes/Pegasus0/LoC/names
+subauthorities: family|geographic|conference
+#subauthorities: organizations|titles|persons|family|geographic|conference
+#lucenePath: /Volumes/Pegasus0/LD4L/lucene/LoC/names
+lucenePath: lucene/LoC/names
+stemming: false
+queryVariable: s
+query: \
+    CONSTRUCT { ?s ?p ?o . ?o <http://www.loc.gov/mads/rdf/v1#variantLabel> ?r . ?rws ?rwp ?rwo . ?rwo $rp ?rs . ?o ?q ?r2 . \n\
+    			 ?s <http://www.loc.gov/mads/rdf/v1#variantLabel> ?mvar . ?mvar <http://www.loc.gov/mads/rdf/v1#variantLabel> ?mlab . ?s <http://www.loc.gov/mads/rdf/v1#hasSource> ?msrc . ?msrc ?msrcp ?msrco . \n\
+    			 ?s <http://www.loc.gov/mads/rdf/v1#hasEarlierEstablishedForm> ?meef . ?meef ?meefp ?meefo . ?s <http://www.loc.gov/mads/rdf/v1#hasLaterEstablishedForm> ?mlef . ?mlef ?mlefp ?mlefo } WHERE { \n\
+        { \n\
+          ?s ?p ?o . \n\
+          ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#PersonalName> . \n\
+          OPTIONAL { \n\
+            ?o <http://www.loc.gov/mads/rdf/v1#variantLabel> ?r \n\
+            FILTER (isBlank(?o)) \n\
+          } \n\
+          OPTIONAL { \n\
+            ?s mads:identifiesRWO ?rws. \n\
+            ?rws ?rwp ?rwo. \n\
+            OPTIONAL { \n\
+               ?rwo ?rp ?rs \n\
+            } \n\
+          } \n\
+        } \n\
+    UNION \n\
+        { \n\
+          ?s ?p ?o . \n\
+          ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#FamilyName> . \n\
+          OPTIONAL { \n\
+            ?s mads:identifiesRWO ?rws. \n\
+            ?rws ?rwp ?rwo. \n\
+          } \n\
+          OPTIONAL { \n\
+            ?o ?q ?r2 \n\
+            FILTER (isBlank(?o2)) \n\
+           } \n\
+        } \n\
+    UNION \n\
+        { \n\
+          ?s ?p ?o . \n\
+          ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#CorporateName> . \n\
+          OPTIONAL { \n\
+            ?s mads:identifiesRWO ?rws. \n\
+            ?rws ?rwp ?rwo. \n\
+          } \n\
+          OPTIONAL { \n\
+            ?o ?q ?r2 \n\
+            FILTER (isBlank(?o2)) \n\
+           } \n\
+        } \n\
+    UNION \n\
+        { \n\
+          ?s ?p ?o . \n\
+          ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Title> . \n\
+          OPTIONAL { \n\
+            ?s mads:identifiesRWO ?rws. \n\
+            ?rws ?rwp ?rwo. \n\
+          } \n\
+          OPTIONAL { \n\
+            ?o ?q ?r2 \n\
+            FILTER (isBlank(?o2)) \n\
+           } \n\
+        } \n\
+    UNION \n\
+        { \n\
+          ?s ?p ?o . \n\
+          ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Geographic> . \n\
+          OPTIONAL { \n\
+            ?s mads:hasVariant ?mvar. \n\
+            ?mvar mads:variantLabel ?mlab. \n\
+          } \n\
+          OPTIONAL { \n\
+            ?s mads:hasSource ?msrc . \n\
+            ?msrc ?msrcp ?msrco . \n\
+           } \n\
+        } \n\
+    UNION \n\
+        { \n\
+          ?s ?p ?o . \n\
+          ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#ConferenceName> . \n\
+          OPTIONAL { \n\
+            ?s mads:hasVariant ?mvar. \n\
+            ?mvar mads:variantLabel ?mlab. \n\
+          } \n\
+          OPTIONAL { \n\
+            ?s mads:hasSource ?msrc . \n\
+            ?msrc ?msrcp ?msrco . \n\
+           } \n\
+          OPTIONAL { \n\
+            ?s mads:hasEarlierEstablishedForm ?meef . \n\
+            ?meef ?meefp ?meefo . \n\
+           } \n\
+         OPTIONAL { \n\
+            ?s mads:hasLasterEstablishedForm ?mlef . \n\
+            ?mlef ?mlefp ?mlefo . \n\
+           } \n\
+        } \n\
+    UNION \n\
+        { \n\
+          ?s ?p ?o . \n\
+          FILTER NOT EXISTS { ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#PersonalName> } \n\
+          FILTER NOT EXISTS { ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#FamilyName> } \n\
+          FILTER NOT EXISTS { ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#CorporateName> } \n\
+          FILTER NOT EXISTS { ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Title> } \n\
+          FILTER NOT EXISTS { ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Geographic> } \n\
+          FILTER NOT EXISTS { ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#ConferenceName> } \n\
+          OPTIONAL { \n\
+            ?s mads:identifiesRWO ?rws. \n\
+            ?rws ?rwp ?rwo. \n\
+          } \n\
+          OPTIONAL { \n\
+            ?o ?q ?r2 \n\
+            FILTER (isBlank(?o2)) \n\
+          } \n\
+        } \n\
+    } \n\
+    

@@ -1,0 +1,22 @@
+tripleStore: /Volumes/Pegasus0/Ligatus
+#lucenePath: /Volumes/Pegasus0/LD4L/lucene/LoC/performance
+lucenePath: lucene/Ligatus
+stemming: true
+queryVariable: s
+query: \
+    CONSTRUCT { ?s ?p ?o . ?broader skos:prefLabel ?broader_label . ?narrower skos:prefLabel ?narrower_label } WHERE { \n\
+	    { \n\
+	      ?s ?p ?o . \n\
+	      ?s rdf:type skos:Concept . \n\
+	    } \n\
+    UNION \n\
+    	{ \n\
+          ?s skos:broader ?broader . \n\
+	      ?broader skos:prefLabel ?broader_label . \n\
+    	} \n\
+    UNION \n\
+        { \n\
+          ?s skos:narrower ?narrower . \n\
+	      ?narrower skos:prefLabel ?narrower_label . \n\
+        } \n\
+    } \n\
