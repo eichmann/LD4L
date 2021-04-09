@@ -26,6 +26,8 @@ public class FASTIndexer extends ThreadedIndexer implements Runnable {
 	// CreativeWork|Organization|GeoCoordinates|Place|Person|facet-Topical|facet-FormGenre|Event
 	
 	for (String subauthority : subauthorities) {
+	    if (args.length > 0 && !args[0].equals(subauthority))
+	    	continue;
 	    logger.info("");
 	    logger.info("indexing subauthority " + subauthority);
 	    logger.info("");
@@ -37,6 +39,18 @@ public class FASTIndexer extends ThreadedIndexer implements Runnable {
 				+ "?uri rdf:type schema:Intangible . "
 				+ "?uri skos:inScheme <http://id.worldcat.org/fast/ontology/1.0/#" + subauthority + "> . "
 				+ "?uri skos:prefLabel ?subject . "
+		    		+ "}";
+	    else if (subauthority.equals("Meeting"))
+			query =
+			"SELECT DISTINCT ?uri ?subject WHERE { "
+				+ "?uri rdf:type bf:" + subauthority + " . "
+				+ "?uri <http://schema.org/name> ?subject . "
+		    		+ "}";
+	    else if (subauthority.equals("Periodization"))
+			query =
+			"SELECT DISTINCT ?uri ?subject WHERE { "
+				+ "?uri rdf:type prod:" + subauthority + " . "
+				+ "?uri <http://schema.org/name> ?subject . "
 		    		+ "}";
 	    else
 		query =
@@ -50,11 +64,21 @@ public class FASTIndexer extends ThreadedIndexer implements Runnable {
 	    closeWriter();
 	}
 	
-	// create the full merged index
-	logger.info("");
-	logger.info("merging subauthorities...");
-	logger.info("");
-	mergeSubauthorities();
+	if (args.length == 0 || (args.length > 0 && args[0].equals("-merge"))) {
+		// create the full merged index
+		logger.info("");
+		logger.info("merging subauthorities...");
+		logger.info("");
+		mergeSubauthorities();
+
+		// create the event/meeting-specific index
+		logger.info("");
+		logger.info("merging Entity and Meeting subauthorities...");
+		logger.info("");
+		resetSubauthorities("Event|Meeting");
+		setAltLucenePath(lucenePath + "_event_meeting");
+		mergeSubauthorities();
+	}
     }
     
     int threadID = 0;
@@ -88,6 +112,18 @@ public class FASTIndexer extends ThreadedIndexer implements Runnable {
 				+ "<" + URI + "> rdf:type schema:Intangible . "
 				+ "<" + URI + "> skos:inScheme <http://id.worldcat.org/fast/ontology/1.0/#" + subauthority + "> . "
 				+ "<" + URI + "> skos:prefLabel ?name . "
+		    		+ "}";
+	    else if (subauthority.equals("Meeting"))
+			query =
+			"SELECT DISTINCT ?name WHERE { "
+				+ "<" + URI + "> rdf:type bf:" + subauthority + " . "
+				+ "<" + URI + "> <http://schema.org/name> ?name . "
+		    		+ "}";
+	    else if (subauthority.equals("Periodization"))
+			query =
+			"SELECT DISTINCT ?name WHERE { "
+				+ "<" + URI + "> rdf:type prod:" + subauthority + " . "
+				+ "<" + URI + "> <http://schema.org/name> ?name . "
 		    		+ "}";
 	    else
 		query =

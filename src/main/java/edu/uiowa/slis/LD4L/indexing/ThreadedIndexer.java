@@ -65,6 +65,8 @@ public abstract class ThreadedIndexer {
 			+ " PREFIX mads: <http://www.loc.gov/mads/rdf/v1#> "
 			+ " PREFIX loc: <http://id.loc.gov/vocabulary/identifiers/> "
 			+ " PREFIX bib: <http://bib.ld4l.org/ontology/> "
+			+ " PREFIX bf: <http://id.loc.gov/ontologies/bibframe/> "
+			+ " PREFIX prod: <http://www.productontology.org/id/> "
 			+ " PREFIX gn: <http://www.geonames.org/ontology#> ";
 
 	protected static IndexWriter theWriter = null;
