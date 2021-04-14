@@ -107,7 +107,8 @@ public class MeSHIndexer extends ThreadedIndexer implements Runnable {
 	    query1 = 
 		  "SELECT DISTINCT ?concept WHERE { "
 			  + "<" + URI + "> <http://id.nlm.nih.gov/mesh/vocab#preferredConcept> ?c . "
-			  + "?c <http://www.w3.org/2000/01/rdf-schema#label> ?concept . "
+			  + "?c <http://id.nlm.nih.gov/mesh/vocab#term> ?t . "
+			  + "?t <http://id.nlm.nih.gov/mesh/vocab#prefLabel> ?concept . "
 		+ "}";
 	    ars = getResultSet(prefix + query1);
 	    while (ars.hasNext()) {
@@ -120,7 +121,7 @@ public class MeSHIndexer extends ThreadedIndexer implements Runnable {
 	    String query2 = 
 		  "SELECT DISTINCT ?concept WHERE { "
 			  + "<" + URI + "> <http://id.nlm.nih.gov/mesh/vocab#concept> ?c . "
-			  + "?bc <http://id.nlm.nih.gov/mesh/vocab#broaderConcept> ?c . "
+			  + "?c <http://id.nlm.nih.gov/mesh/vocab#broaderConcept> ?bc . "
 			  + "?bc <http://www.w3.org/2000/01/rdf-schema#label> ?concept . "
 		+ "}";
 	    ars = getResultSet(prefix + query2);
@@ -134,7 +135,7 @@ public class MeSHIndexer extends ThreadedIndexer implements Runnable {
 	    query2 = 
 		  "SELECT DISTINCT ?concept WHERE { "
 			  + "<" + URI + "> <http://id.nlm.nih.gov/mesh/vocab#preferredConcept> ?c . "
-			  + "?bc <http://id.nlm.nih.gov/mesh/vocab#broaderConcept> ?c . "
+			  + "?c <http://id.nlm.nih.gov/mesh/vocab#broaderConcept> ?bc . "
 			  + "?bc <http://www.w3.org/2000/01/rdf-schema#label> ?concept . "
 		+ "}";
 	    ars = getResultSet(prefix + query2);
@@ -148,7 +149,7 @@ public class MeSHIndexer extends ThreadedIndexer implements Runnable {
 	    String query3 = 
 		  "SELECT DISTINCT ?concept WHERE { "
 			  + "<" + URI + "> <http://id.nlm.nih.gov/mesh/vocab#concept> ?c . "
-			  + "?nc <http://id.nlm.nih.gov/mesh/vocab#narrowerConcept> ?c . "
+			  + "?c <http://id.nlm.nih.gov/mesh/vocab#narrowerConcept> ?nc . "
 			  + "?nc <http://www.w3.org/2000/01/rdf-schema#label> ?concept . "
 		+ "}";
 	    ars = getResultSet(prefix + query3);
@@ -162,7 +163,7 @@ public class MeSHIndexer extends ThreadedIndexer implements Runnable {
 	    query3 = 
 		  "SELECT DISTINCT ?concept WHERE { "
 			  + "<" + URI + "> <http://id.nlm.nih.gov/mesh/vocab#preferredConcept> ?c . "
-			  + "?nc <http://id.nlm.nih.gov/mesh/vocab#narrowerConcept> ?c . "
+			  + "?c <http://id.nlm.nih.gov/mesh/vocab#narrowerConcept> ?nc . "
 			  + "?nc <http://www.w3.org/2000/01/rdf-schema#label> ?concept . "
 		+ "}";
 	    ars = getResultSet(prefix + query3);
@@ -176,7 +177,7 @@ public class MeSHIndexer extends ThreadedIndexer implements Runnable {
 	    String query4 = 
 		  "SELECT DISTINCT ?concept WHERE { "
 			  + "<" + URI + "> <http://id.nlm.nih.gov/mesh/vocab#concept> ?c . "
-			  + "?rc <http://id.nlm.nih.gov/mesh/vocab#relatedConcept> ?c . "
+			  + "?c <http://id.nlm.nih.gov/mesh/vocab#relatedConcept> ?rc . "
 			  + "?rc <http://www.w3.org/2000/01/rdf-schema#label> ?concept . "
 		+ "}";
 	    ars = getResultSet(prefix + query4);
@@ -190,7 +191,7 @@ public class MeSHIndexer extends ThreadedIndexer implements Runnable {
 	    query4 = 
 		  "SELECT DISTINCT ?concept WHERE { "
 			  + "<" + URI + "> <http://id.nlm.nih.gov/mesh/vocab#preferredConcept> ?c . "
-			  + "?rc <http://id.nlm.nih.gov/mesh/vocab#relatedConcept> ?c . "
+			  + "?c <http://id.nlm.nih.gov/mesh/vocab#relatedConcept> ?rc . "
 			  + "?rc <http://www.w3.org/2000/01/rdf-schema#label> ?concept . "
 		+ "}";
 	    ars = getResultSet(prefix + query4);
