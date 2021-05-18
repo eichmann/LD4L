@@ -15,6 +15,11 @@ import org.apache.log4j.PropertyConfigurator;
 
 public class NTripleFilter {
 	static Logger logger = Logger.getLogger(NTripleFilter.class);
+	static boolean doObjectTriples = true;
+	static boolean doLiteralTriples = false;
+	static boolean doSubjects = false;
+	static boolean doPredicates = false;
+	static boolean doObjects = true;
 
 	public static void main(String[] args) throws IOException, InterruptedException {
 		Thread.sleep(100000000);
@@ -22,35 +27,56 @@ public class NTripleFilter {
 		Pattern objectPat = Pattern.compile("^<([^>]+)> *<([^>]+)> *<([^>]+)> *[.]$");
 		Pattern literalPat = Pattern.compile("^<([^>]+)> *<([^>]+)> *(.*) *[.]$");
 
-		BufferedReader reader = new BufferedReader(new InputStreamReader((new FileInputStream(new File(args[1])))));
+		BufferedReader reader = new BufferedReader(new InputStreamReader((new FileInputStream(new File(args[1])))),1000000);
 		String buffer = null;
+		String subject = null;
+		String predicate = null;
+		String object = null;
 		while ((buffer = reader.readLine()) != null) {
-			Matcher objectMatch = objectPat.matcher(buffer);
-			if (objectMatch.find() && !buffer.contains("> \"<")) {
-				logger.debug("object matched: " + buffer);
-				String subject = URIref.encode(StringEscapeUtils.unescapeJava(objectMatch.group(1)));
-				String predicate = URIref.encode(StringEscapeUtils.unescapeJava(objectMatch.group(2)));
-				String object = URIref.encode(StringEscapeUtils.unescapeJava(objectMatch.group(3)));
-				logger.debug("\tsubject: " + subject);
-				logger.debug("\tpredicate: " + predicate);
-				logger.debug("\tobject: " + object);
-				System.out.println("<" + subject + "> <" + predicate + "> <" + object + "> .");
-				continue;
+			
+			if (doObjectTriples) {
+				Matcher objectMatch = objectPat.matcher(buffer);
+				if (objectMatch.find() && !buffer.contains("> \"<")) {
+					logger.debug("object matched: " + buffer);
+					if (doSubjects) {
+						subject = URIref.encode(StringEscapeUtils.unescapeJava(objectMatch.group(1)));
+						logger.debug("\tsubject: " + subject);
+					} else
+						subject =  objectMatch.group(1);
+					if (doPredicates) {
+						predicate = URIref.encode(StringEscapeUtils.unescapeJava(objectMatch.group(2)));
+						logger.debug("\tpredicate: " + predicate);
+					} else
+						predicate = objectMatch.group(2);
+					if (doObjects) {
+						object = URIref.encode(StringEscapeUtils.unescapeJava(objectMatch.group(3)));
+						logger.debug("\tobject: " + object);
+					} else
+						object = objectMatch.group(3);
+					System.out.println("<" + subject + "> <" + predicate + "> <" + object + "> .");
+					continue;
+				} 
 			}
-
-			Matcher literalMatch = literalPat.matcher(buffer);
-			if (literalMatch.find() && !buffer.contains("> \"<")) {
-				logger.debug("literal matched: " + buffer);
-				String subject = URIref.encode(StringEscapeUtils.unescapeJava(literalMatch.group(1)));
-				String predicate = URIref.encode(StringEscapeUtils.unescapeJava(literalMatch.group(2)));
-				String literal = literalMatch.group(3).trim();
-				logger.debug("\tsubject: " + subject);
-				logger.debug("\tpredicate: " + predicate);
-				logger.debug("\tliteral: " + literal);
-				System.out.println("<" + subject + "> <" + predicate + "> " + literal + " .");
-				continue;
+			if (doLiteralTriples) {
+				Matcher literalMatch = literalPat.matcher(buffer);
+				if (literalMatch.find() && !buffer.contains("> \"<")) {
+					logger.debug("literal matched: " + buffer);
+					if (doSubjects) {
+						subject = URIref.encode(StringEscapeUtils.unescapeJava(literalMatch.group(1)));
+						logger.debug("\tsubject: " + subject);
+					} else
+						subject =  literalMatch.group(1);
+					if (doPredicates) {
+						predicate = URIref.encode(StringEscapeUtils.unescapeJava(literalMatch.group(2)));
+						logger.debug("\tpredicate: " + predicate);
+					} else
+						predicate = literalMatch.group(2);
+					String literal = literalMatch.group(3).trim();
+					logger.debug("\tliteral: " + literal);
+					System.out.println("<" + subject + "> <" + predicate + "> " + literal + " .");
+					continue;
+				} 
 			}
-
 			System.out.println(buffer);
 		}
 		reader.close();
