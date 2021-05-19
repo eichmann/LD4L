@@ -22,7 +22,6 @@ public class NTripleFilter {
 	static boolean doObjects = true;
 
 	public static void main(String[] args) throws IOException, InterruptedException {
-		Thread.sleep(100000000);
 		PropertyConfigurator.configure(args[0]);
 		Pattern objectPat = Pattern.compile("^<([^>]+)> *<([^>]+)> *<([^>]+)> *[.]$");
 		Pattern literalPat = Pattern.compile("^<([^>]+)> *<([^>]+)> *(.*) *[.]$");
