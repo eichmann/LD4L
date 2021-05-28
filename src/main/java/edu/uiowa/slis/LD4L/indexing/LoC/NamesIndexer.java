@@ -45,6 +45,12 @@ public class NamesIndexer extends ThreadedIndexer implements Runnable {
 			+ "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Title> . "
 			+ "} ";
 		break;
+	    case "nametitles":
+		query = "SELECT ?uri ?subject WHERE { "
+			+ "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?subject . "
+			+ "?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#NameTitle> . "
+			+ "} ";
+		break;
 	    case "persons":
 		query = "SELECT ?uri ?subject WHERE { "
 			+ "?uri <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?subject . "
@@ -118,6 +124,11 @@ public class NamesIndexer extends ThreadedIndexer implements Runnable {
 	    query = "SELECT ?name WHERE { "	
 		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
 		    + "<" + URI + "> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#Title> . " + "} ";
+	    break;
+	case "nametitles":
+	    query = "SELECT ?name WHERE { "	
+		    + "<" + URI + "> <http://www.loc.gov/mads/rdf/v1#authoritativeLabel> ?name . "
+		    + "<" + URI + "> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.loc.gov/mads/rdf/v1#NameTitle> . " + "} ";
 	    break;
 	case "persons":
 	    query = "SELECT ?name WHERE { "

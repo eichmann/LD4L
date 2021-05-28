@@ -53,14 +53,6 @@ src/main/java/edu/uiowa/slis/LD4L/util/PropertyLoader.java -text
 src/main/resources/META-INF/taglib.tld -text
 src/non-packaged-resources/Model.clay -text
 src/non-packaged-resources/catalog-v001.xml -text
-src/non-packaged-resources/indexing_properties/cerl_corporate.properties~ -text
-src/non-packaged-resources/indexing_properties/cerl_imprint.properties~ -text
-src/non-packaged-resources/indexing_properties/cerl_person.properties~ -text
-src/non-packaged-resources/indexing_properties/loc_demographics.properties~ -text
-src/non-packaged-resources/indexing_properties/loc_instances.properties~ -text
-src/non-packaged-resources/indexing_properties/loc_names.properties~ -text
-src/non-packaged-resources/indexing_properties/loc_rwo.properties~ -text
-src/non-packaged-resources/indexing_properties/loc_works.properties~ -text
 src/non-packaged-resources/ld4l.ttl -text
 src/test/java/edu/uiowa/slis/LD4L/README.txt -text
 src/test/resources/README.txt -text

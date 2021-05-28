@@ -63,7 +63,10 @@ public class SubjectsIndexer extends ThreadedIndexer implements Runnable {
 	ResultSet rs = getResultSet(prefix + query);
 	while (rs.hasNext()) {
 	    QuerySolution sol = rs.nextSolution();
-	    subject = sol.get("?subject").asLiteral().getString();
+	    if (!sol.get("?subject").isLiteral())
+	    	subject = "";
+	    else
+	    	subject = sol.get("?subject").asLiteral().getString();
 	}
 	logger.info("\tprefLabel: " + subject);
 

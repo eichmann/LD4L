@@ -158,6 +158,9 @@ public abstract class ThreadedIndexer {
 			if (sol.get("?subject") == null)
 				continue;
 
+			if (!sol.get("?subject").isLiteral())
+				continue;
+			
 			String URI = sol.get("?uri").toString();
 			String subject = sol.get("?subject").asLiteral().getString();
 
