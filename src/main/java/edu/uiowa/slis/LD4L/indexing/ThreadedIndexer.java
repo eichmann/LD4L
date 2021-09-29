@@ -264,7 +264,7 @@ public abstract class ThreadedIndexer {
 		for (Iterator<Statement> i = model.listStatements(); i.hasNext();) {
 			Triple triple = i.next().asTriple();
 			String tripleString = formatNode(triple.getSubject()) + " " + formatNode(triple.getPredicate()) + " " + formatNode(triple.getObject()) + " .";
-			logger.debug("triple: " + tripleString);
+			logger.debug("triple: " + tripleString + "\t" + triple.getObject().toString());
 			buffer.append(tripleString + "\n");
 		}
 
@@ -276,8 +276,9 @@ public abstract class ThreadedIndexer {
 
 	private static String formatNode(Node node) {
 		if (node.isLiteral()) {
-			return "\"" + node.getLiteral().toString().replaceAll("\\r", "").replace("\"", "\\\"").replace("\n", "\\n")	+ "\""
-					+ (node.getLiteral().language() == null || node.getLiteral().language().trim().length() == 0 ? "" : "@" + node.getLiteral().language().toLowerCase());
+			return node.toString();
+//			return "\"" + node.getLiteral().toString().replaceAll("\\r", "").replace("\"", "\\\"").replace("\n", "\\n")	+ "\""
+//					+ (node.getLiteral().language() == null || node.getLiteral().language().trim().length() == 0 ? "" : "@" + node.getLiteral().language().toLowerCase());
 		} else if (node.isBlank()) {
 			return getBlankNodeLabel(node.toString());
 		} else {
