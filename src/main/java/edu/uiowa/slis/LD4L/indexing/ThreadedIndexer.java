@@ -10,6 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.ParameterizedSparqlString;
@@ -73,6 +74,15 @@ public abstract class ThreadedIndexer {
 	protected static Queue<String> uriQueue = new Queue<String>();
 	protected static int count = 0;
 	private static String[] subauthorities = null;
+	
+	public static void main (String[] args) {
+		String testing = "xy\"z\r\na\"bc";
+		String tag = "en";
+		Node node = NodeFactory.createLiteral(testing, tag);
+		logger.info(node.toString());
+		logger.info(node.getLiteralValue());
+		logger.info(formatNode(node));
+	}
 
 	protected static void loadProperties(String propertyFileName) {
 		prop_file = PropertyLoader.loadProperties(propertyFileName);
@@ -276,9 +286,8 @@ public abstract class ThreadedIndexer {
 
 	private static String formatNode(Node node) {
 		if (node.isLiteral()) {
-			return node.toString();
-//			return "\"" + node.getLiteral().toString().replaceAll("\\r", "").replace("\"", "\\\"").replace("\n", "\\n")	+ "\""
-//					+ (node.getLiteral().language() == null || node.getLiteral().language().trim().length() == 0 ? "" : "@" + node.getLiteral().language().toLowerCase());
+			return "\"" + ((String)node.getLiteralValue()).replaceAll("\\r", "").replace("\"", "\\\"").replace("\n", "\\n")	+ "\""
+					+ (node.getLiteral().language() == null || node.getLiteral().language().trim().length() == 0 ? "" : "@" + node.getLiteral().language().toLowerCase());
 		} else if (node.isBlank()) {
 			return getBlankNodeLabel(node.toString());
 		} else {
