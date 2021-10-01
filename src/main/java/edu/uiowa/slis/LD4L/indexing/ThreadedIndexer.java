@@ -75,7 +75,7 @@ public abstract class ThreadedIndexer {
 	protected static int count = 0;
 	private static String[] subauthorities = null;
 	
-	public static void main (String[] args) {
+	public static void main (String[] args) throws Exception {
 		String testing = "xy\"z\r\na\"bc";
 		String tag = "en";
 		Node node = NodeFactory.createLiteral(testing, tag);
@@ -285,10 +285,10 @@ public abstract class ThreadedIndexer {
 	static int blankNodeCount = 0;
 
 	private static String formatNode(Node node) {
-		if (node.isLiteral()) {
+		if (node.isLiteral() && node.getLiteralValue() instanceof String) {
 			return "\"" + ((String)node.getLiteralValue()).replaceAll("\\r", "").replace("\"", "\\\"").replace("\n", "\\n")	+ "\""
 					+ (node.getLiteral().language() == null || node.getLiteral().language().trim().length() == 0 ? "" : "@" + node.getLiteral().language().toLowerCase());
-		} else if (node.isBlank()) {
+		} else if (node.isBlank() || node.isLiteral()) {
 			return getBlankNodeLabel(node.toString());
 		} else {
 			return "<" + node.toString() + ">";
