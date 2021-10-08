@@ -60,6 +60,7 @@
     <#share_ckb>
     <#CERL>
     <#Ligatus>
+    <#ckb_2_0_stage_A>
    ) .
 
 ########################
@@ -375,6 +376,12 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     fuseki:dataset           <#LigatusTDB> ;
     .
 
+<#ckb_2_0_stage_A>  rdf:type fuseki:Service ;
+    fuseki:name              "ckb_2_0_stage_A" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#ckb_2_0_stage_ATDB> ;
+    .
+
 <#cornellTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LD4L/triplestores/cornell" ;
@@ -628,5 +635,10 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
  <#LigatusTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LD4L/triplestores/Ligatus" ;
+    .
+         
+ <#ckb_2_0_stage_ATDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/ckb_2_0_stage_A" ;
     .
     
