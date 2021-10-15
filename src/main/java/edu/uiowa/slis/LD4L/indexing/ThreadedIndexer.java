@@ -24,6 +24,7 @@ import org.apache.jena.query.Syntax;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.tdb.TDBFactory;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -286,7 +287,7 @@ public abstract class ThreadedIndexer {
 
 	private static String formatNode(Node node) {
 		if (node.isLiteral() && node.getLiteralValue() instanceof String) {
-			return "\"" + ((String)node.getLiteralValue()).replaceAll("\\r", "").replace("\"", "\\\"").replace("\n", "\\n")	+ "\""
+			return "\"" + StringEscapeUtils.escapeJava((String)node.getLiteralValue())	+ "\""
 					+ (node.getLiteral().language() == null || node.getLiteral().language().trim().length() == 0 ? "" : "@" + node.getLiteral().language().toLowerCase());
 		} else if (node.isBlank() || node.isLiteral()) {
 			return getBlankNodeLabel(node.toString());
