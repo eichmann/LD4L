@@ -286,13 +286,17 @@ public abstract class ThreadedIndexer {
 	static int blankNodeCount = 0;
 
 	private static String formatNode(Node node) {
-		if (node.isLiteral() && node.getLiteralValue() instanceof String) {
-			return "\"" + StringEscapeUtils.escapeJava((String)node.getLiteralValue())	+ "\""
-					+ (node.getLiteral().language() == null || node.getLiteral().language().trim().length() == 0 ? "" : "@" + node.getLiteral().language().toLowerCase());
-		} else if (node.isBlank() || node.isLiteral()) {
-			return getBlankNodeLabel(node.toString());
-		} else {
-			return "<" + node.toString() + ">";
+		try {
+			if (node.isLiteral() && node.getLiteralValue() instanceof String) {
+				return "\"" + StringEscapeUtils.escapeJava((String)node.getLiteralValue())	+ "\""
+						+ (node.getLiteral().language() == null || node.getLiteral().language().trim().length() == 0 ? "" : "@" + node.getLiteral().language().toLowerCase());
+			} else if (node.isBlank() || node.isLiteral()) {
+				return getBlankNodeLabel(node.toString());
+			} else {
+				return "<" + node.toString() + ">";
+			}
+		} catch (org.apache.jena.datatypes.DatatypeFormatException e) {
+			return node.toString();
 		}
 	}
 
