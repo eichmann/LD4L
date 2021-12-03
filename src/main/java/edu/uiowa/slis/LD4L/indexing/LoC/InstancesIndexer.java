@@ -71,6 +71,7 @@ public class InstancesIndexer extends ThreadedIndexer implements Runnable {
 	    Document theDocument = new Document();
 	    theDocument.add(new StringField("uri", URI, Field.Store.YES));
 	    theDocument.add(new StringField("name", label, Field.Store.YES));
+		theDocument.add(new StringField("name_lower", label.toLowerCase(), Field.Store.YES));
 	    theDocument.add(new TextField("content", retokenizeString(label, true), Field.Store.NO));
 
 	 theDocument.add(new StoredField("payload", generatePayload(URI)));

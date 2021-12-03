@@ -87,6 +87,7 @@ public class VocabIndexer extends ThreadedIndexer implements Runnable {
 	Document theDocument = new Document();
 	theDocument.add(new StringField("uri", URI, Field.Store.YES));
 	theDocument.add(new StringField("name", name, Field.Store.YES));
+	theDocument.add(new StringField("name_lower", name.toLowerCase(), Field.Store.YES));
 	theDocument.add(new TextField("content", retokenizeString(name, true), Field.Store.NO));
 //	annotateLoCName(URI, theDocument, "occupation", "authoritativeLabel");
 

@@ -78,6 +78,7 @@ public class NALTIndexer extends ThreadedIndexer implements Runnable {
 	Document theDocument = new Document();
 	theDocument.add(new StringField("uri", URI, Field.Store.YES));
 	theDocument.add(new StringField("name", subject, Field.Store.YES));
+	theDocument.add(new StringField("name_lower", subject.toLowerCase(), Field.Store.YES));
 	theDocument.add(new TextField("content", retokenizeString(subject, true), Field.Store.NO));
 	theDocument.add(new TextField("content", retokenizeString(spanish, true), Field.Store.NO));
 

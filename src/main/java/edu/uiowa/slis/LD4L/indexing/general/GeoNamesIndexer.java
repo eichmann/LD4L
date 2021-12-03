@@ -121,6 +121,7 @@ public class GeoNamesIndexer extends ThreadedIndexer implements Runnable {
 	Document theDocument = new Document();
 	theDocument.add(new StringField("uri", URI, Field.Store.YES));
 	theDocument.add(new StringField("name", name, Field.Store.YES));
+	theDocument.add(new StringField("name_lower", name.toLowerCase(), Field.Store.YES));
 	theDocument.add(new TextField("content", retokenizeString(name, true), Field.Store.NO));
 	theDocument.add(new TextField("prefcontent", retokenizeString(name, true), Field.Store.NO));
 
@@ -142,7 +143,8 @@ public class GeoNamesIndexer extends ThreadedIndexer implements Runnable {
 	    logger.info("[" + threadID + "] count: " + count);
     }
     
-    void indexVariant(Document theDocument, String uri, String className) throws CorruptIndexException, IOException {
+    @SuppressWarnings("deprecation")
+	void indexVariant(Document theDocument, String uri, String className) throws CorruptIndexException, IOException {
 	String query =
 		"SELECT DISTINCT ?name WHERE { "
 		+ "<" + uri + "> <http://www.geonames.org/ontology#" + className + "> ?name . "
@@ -157,7 +159,8 @@ public class GeoNamesIndexer extends ThreadedIndexer implements Runnable {
 	}
     }
     
-    void indexVariant2(Document theDocument, String uri, String className) throws CorruptIndexException, IOException {
+    @SuppressWarnings("deprecation")
+	void indexVariant2(Document theDocument, String uri, String className) throws CorruptIndexException, IOException {
 	String query =
 		"SELECT DISTINCT ?name WHERE { "
 		+ "<" + uri + "> <http://www.geonames.org/ontology#" + className + "> ?v . "
