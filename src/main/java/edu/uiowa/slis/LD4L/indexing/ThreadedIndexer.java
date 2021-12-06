@@ -160,6 +160,7 @@ public abstract class ThreadedIndexer {
 	}
 
 	protected static void queue(String query) {
+		Hashtable<String,String> hash = new Hashtable<String,String>();
 		logger.info("triplestore: " + tripleStore);
 		logger.info("query: " + query);
 		ResultSet rs = getResultSet(prefix + query);
@@ -175,10 +176,15 @@ public abstract class ThreadedIndexer {
 			String URI = sol.get("?uri").toString();
 			String subject = sol.get("?subject").asLiteral().getString();
 
-			if (!URI.startsWith("http:"))
+			if (!URI.startsWith("http:") && !URI.startsWith("https:"))
 				continue;
 
+			if (hash.containsKey(URI)) {
+				logger.debug("duplicate: " + URI + "\t" + sol.get("?subject"));
+				continue;
+			}
 			logger.debug("uri: " + URI + "\tsubject: " + subject);
+			hash.put(URI, "");
 			uriQueue.queue(URI);
 		}
 	}
@@ -279,6 +285,7 @@ public abstract class ThreadedIndexer {
 			buffer.append(tripleString + "\n");
 		}
 
+		logger.debug(buffer.toString());
 		return buffer.toString();
 	}
 
