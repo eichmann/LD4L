@@ -117,7 +117,10 @@ public abstract class ThreadedIndexer {
 
 	protected static void setSubauthority(String candidate) {
 		subauthority = candidate;
-		if (tripleStorePath != null)
+		if (prop_file.getProperty("tripleStore_"+subauthority) != null) {
+			tripleStore = prop_file.getProperty("tripleStore_"+subauthority);
+			dataset = TDBFactory.createDataset(prop_file.getProperty("tripleStore_"+subauthority));
+		} else if (tripleStorePath != null)
 			dataset = TDBFactory.createDataset(tripleStorePath + "/" + subauthority);
 	}
 
