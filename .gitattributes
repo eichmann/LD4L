@@ -29,6 +29,7 @@ src/main/java/edu/uiowa/slis/LD4L/TripleStreamer.java -text
 src/main/java/edu/uiowa/slis/LD4L/indexing/CERL/CorporateIndexer.java -text
 src/main/java/edu/uiowa/slis/LD4L/indexing/CERL/ImprintIndexer.java -text
 src/main/java/edu/uiowa/slis/LD4L/indexing/CERL/PersonIndexer.java -text
+src/main/java/edu/uiowa/slis/LD4L/indexing/LoC/CulturalOrganizationsIndexer.java -text
 src/main/java/edu/uiowa/slis/LD4L/indexing/LoC/DemographicsIndexer.java -text
 src/main/java/edu/uiowa/slis/LD4L/indexing/LoC/GenreIndexer.java -text
 src/main/java/edu/uiowa/slis/LD4L/indexing/LoC/InstancesIndexer.java -text
