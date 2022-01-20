@@ -60,6 +60,7 @@
     <#share_vde_yale>
     <#share_ckb>
     <#CERL>
+    <#ISNI>
     <#Ligatus>
     <#ckb_2_0_stage_A>
     <#PCC>
@@ -378,6 +379,12 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     fuseki:dataset           <#CERLTDB> ;
     .
 
+<#ISNI>  rdf:type fuseki:Service ;
+    fuseki:name              "ISNI" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#ISNITDB> ;
+    .
+
 <#Ligatus>  rdf:type fuseki:Service ;
     fuseki:name              "Ligatus" ;       # http://host:port/tdb
     fuseki:serviceQuery      "sparql" ;    # SPARQL query service
@@ -649,6 +656,11 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
  <#CERLTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LD4L/triplestores/CERL" ;
+    .
+         
+ <#ISNITDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/ISNI" ;
     .
          
  <#LigatusTDB>
