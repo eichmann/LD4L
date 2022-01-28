@@ -69,6 +69,8 @@ public abstract class ThreadedIndexer {
 			+ " PREFIX bib: <http://bib.ld4l.org/ontology/> "
 			+ " PREFIX bf: <http://id.loc.gov/ontologies/bibframe/> "
 			+ " PREFIX prod: <http://www.productontology.org/id/> "
+			+ " PREFIX isni: <https://isni.org/ontology#> "
+			+ " PREFIX dcterms: <http://purl.org/dc/terms/> "
 			+ " PREFIX gn: <http://www.geonames.org/ontology#> ";
 
 	protected static IndexWriter theWriter = null;
