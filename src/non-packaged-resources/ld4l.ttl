@@ -64,6 +64,7 @@
     <#Ligatus>
     <#ckb_2_0_stage_A>
     <#PCC>
+    <#Homosaurus>
    ) .
 
 ########################
@@ -403,6 +404,12 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     fuseki:dataset           <#PCCTDB> ;
     .
 
+<#Homosaurus>  rdf:type fuseki:Service ;
+    fuseki:name              "Homosaurus" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#HomosaurusTDB> ;
+    .
+
 <#cornellTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LD4L/triplestores/cornell" ;
@@ -675,6 +682,10 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
  <#PCCTDB>
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/LD4L/triplestores/PCC" ;
+    .
+ <#HomosaurusTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LD4L/triplestores/Homosaurus" ;
     .
          
     
