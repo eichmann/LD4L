@@ -22,6 +22,7 @@
      <#fast>
      <#geonames>
      <#grid>
+     <#loc_countries>
      <#loc_cultural_organizations>
      <#loc_demographics>
      <#loc_genre>
@@ -150,6 +151,12 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     fuseki:name              "grid" ;       # http://host:port/tdb
     fuseki:serviceQuery      "sparql" ;    # SPARQL query service
     fuseki:dataset           <#gridTDB> ;
+    .
+
+<#loc_countries>  rdf:type fuseki:Service ;
+    fuseki:name              "loc_countries" ;       # http://host:port/tdb
+    fuseki:serviceQuery      "sparql" ;    # SPARQL query service
+    fuseki:dataset           <#loc_countriesTDB> ;
     .
 
 <#loc_cultural_organizations>  rdf:type fuseki:Service ;
@@ -474,6 +481,11 @@ tdb:GraphTDB    rdfs:subClassOf  ja:Model .
     rdf:type tdb:DatasetTDB ;
     tdb:location "/usr/local/RAID/grid" ;
 	.
+    
+<#loc_countriesTDB>
+    rdf:type tdb:DatasetTDB ;
+    tdb:location "/usr/local/RAID/LoC/countries" ;
+    .
     
 <#loc_cultural_organizationsTDB>
     rdf:type tdb:DatasetTDB ;
